@@ -1,6 +1,8 @@
 package com.example.lumina
 
 import cats.effect.IO
+import com.example.lumina.Resources.LuminaRoutes
+import com.example.lumina.services.HelloWorld
 import org.http4s.*
 import org.http4s.implicits.*
 import munit.CatsEffectSuite
