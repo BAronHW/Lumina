@@ -1,4 +1,4 @@
-package com.example.lumina.Resources
+package Routes
 
 import cats.effect.Sync
 import cats.syntax.all.*
