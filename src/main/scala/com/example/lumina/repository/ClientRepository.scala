@@ -1,11 +1,15 @@
 package com.example.lumina.repository
 
+import Domain.Client
 import skunk.*
 import skunk.implicits.*
 import skunk.codec.all.*
+
 import java.util.UUID
 
-class ClientRepository[F[_]] {}
+object ClientRepository {
+  def insertClient(client: Client) = {}
+}
 
 object ClientRepositoryQueries {
   val clientCodec: Codec[Client] = (uuid *: varchar).to[Client]

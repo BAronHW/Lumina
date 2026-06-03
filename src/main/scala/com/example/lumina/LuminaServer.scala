@@ -6,9 +6,7 @@ import cats.effect.std.Console
 import cats.syntax.all.*
 import com.comcast.ip4s.*
 import com.example.lumina.DB.DataBaseConnection
-import com.example.lumina.repository.ClientRepositoryQueries.insertClient
 import com.example.lumina.services.{HelloWorld, Jokes}
-import java.util.UUID
 import com.example.lumina.types.Config
 import fs2.io.net.Network
 import org.http4s.ember.client.EmberClientBuilder
@@ -29,9 +27,6 @@ object LuminaServer:
         )
       )
       pooled <- DataBaseConnection.pooled(conf)
-      _ <- Resource.eval(
-        pooled.use(session => session.execute(insertClient)(UUID.randomUUID() *: "test-client" *: EmptyTuple))
-      )
       client <- EmberClientBuilder.default[F].build
       helloWorldAlg = HelloWorld.impl[F]
       jokeAlg = Jokes.impl[F](client)
