@@ -1,14 +1,26 @@
 package com.example.lumina.repository
 
 import Domain.Client
+import cats.effect.Resource
 import skunk.*
 import skunk.implicits.*
 import skunk.codec.all.*
-
+import cats.effect.Concurrent
+import cats.syntax.all.*
 import java.util.UUID
 
-object ClientRepository {
-  def insertClient(client: Client) = {}
+class ClientRepository[F[_]: Concurrent](session: Resource[F, Session[F]]) {
+  def createClient(client: Client) = {
+    this.session.use { s =>
+      s.prepare(ClientRepositoryQueries.insertClient).flatMap(ps => ps.execute(client))
+    }
+  }
+
+//  def findClientById(clientId: UUID) = {
+//    this.session.use { s =>
+//      s.prepare(ClientRepositoryQueries.selectClient).use { cmd => }
+//    }
+//  }
 }
 
 object ClientRepositoryQueries {
@@ -22,4 +34,7 @@ object ClientRepositoryQueries {
 
   val updateClient: Command[String *: UUID *: EmptyTuple] =
     sql"UPDATE client SET name = $varchar WHERE id = $uuid".command
+
+  val deleteClient: Command[UUID *: EmptyTuple] =
+    sql"DELETE FROM client WHERE id = $uuid".command
 }
