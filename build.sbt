@@ -21,9 +21,10 @@ libraryDependencies ++= Seq(
   "org.http4s" %% "http4s-circe" % http4sVersion,
   "io.circe" %% "circe-core" % circeVersion,
   "io.circe" %% "circe-generic" % circeVersion,
+  "org.typelevel" %% "log4cats-slf4j" % "2.8.0",
   "io.circe" %% "circe-parser" % circeVersion,
   "org.tpolecat" %% "skunk-core" % skunkVersion,
   "org.tpolecat" %% "natchez-noop" % "0.3.10",
-  "org.scalameta" %% "munit" % "1.3.1",
+  "org.scalameta" %% "munit" % "1.3.2",
   "com.github.pureconfig" %% "pureconfig-core" % "0.17.10"
 )

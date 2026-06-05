@@ -2,7 +2,6 @@ package com.example.lumina
 import Routes.LuminaRoutes
 import cats.effect.{Async, Resource}
 import cats.effect.std.Console
-
 import com.comcast.ip4s.*
 import com.example.lumina.DB.DataBaseConnection
 import com.example.lumina.repository.ClientRepository
@@ -13,13 +12,15 @@ import org.http4s.ember.client.EmberClientBuilder
 import org.http4s.ember.server.EmberServerBuilder
 import org.http4s.implicits.*
 import org.http4s.server.middleware.Logger
+import org.typelevel.log4cats.LoggerFactory
+import org.typelevel.log4cats.slf4j.Slf4jFactory
 import pureconfig.ConfigSource
 import org.typelevel.otel4s.trace.Tracer.Implicits.noop
 import org.typelevel.otel4s.metrics.Meter.Implicits.noop
 
 object LuminaServer:
-
   def run[F[_]: Async: Network: Console]: F[Nothing] = {
+    implicit val logging: LoggerFactory[F] = Slf4jFactory.create[F]
     for {
       conf <- Resource.eval(
         Async[F].fromEither(
@@ -27,8 +28,9 @@ object LuminaServer:
         )
       )
       pooled <- DataBaseConnection.pooled(conf)
+      logger = LoggerFactory[F].getLogger
       clientRepository = new ClientRepository(pooled)
-      clientService = ClientService.impl[F](clientRepository)
+      clientService = ClientService.impl[F](clientRepository, logger)
       client <- EmberClientBuilder.default[F].build
 
       httpApp = (

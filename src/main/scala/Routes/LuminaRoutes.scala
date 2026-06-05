@@ -6,24 +6,16 @@ import cats.effect.Concurrent
 import cats.syntax.all.*
 import com.example.lumina.services.ClientService
 import io.circe.{Decoder, Encoder}
-import io.circe.generic.semiauto.deriveDecoder
 import org.http4s.HttpRoutes
 import org.http4s.circe.*
 import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.dsl.Http4sDsl
-
+import io.circe.generic.auto.*
 
 object LuminaRoutes:
 
-  case class CreateClientRequest(name: String)
-  object CreateClientRequest {
-    given Decoder[CreateClientRequest] = deriveDecoder[CreateClientRequest]
-  }
-
-  case class UpdateClientRequest(name: String)
-  object UpdateClientRequest {
-    given Decoder[UpdateClientRequest] = deriveDecoder[UpdateClientRequest]
-  }
+  private case class CreateClientRequest(name: String)
+  private case class UpdateClientRequest(name: String)
 
   def clientRoutes[F[_]: Concurrent](service: ClientService[F]): HttpRoutes[F] =
     val dsl = new Http4sDsl[F] {}
