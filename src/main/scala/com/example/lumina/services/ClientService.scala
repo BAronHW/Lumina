@@ -14,6 +14,7 @@ trait ClientService[F[_]] {
   def getClientById(clientId: UUID): F[Option[Client]]
   def updateClientById(clientId: UUID, newName: String): F[Completion]
   def removeClientById(clientId: UUID): F[Completion]
+  def getAllClient: F[List[Client]]
 }
 
 object ClientService {
@@ -21,19 +22,23 @@ object ClientService {
     new ClientService[F] {
       override def registerClient(clientName: String): F[Completion] = {
         val newClient = Client(java.util.UUID.randomUUID(), clientName)
-        logger.info("Creating client") >> clientRepository.createClient(newClient)
+        logger.info("Creating client") *> clientRepository.createClient(newClient)
       }
 
       override def getClientById(clientId: UUID): F[Option[Client]] = {
-        logger.info("Getting client by Id") >> clientRepository.findClientById(clientId)
+        logger.info(s"Getting client by Id $clientId") *> clientRepository.findClientById(clientId)
       }
 
       override def updateClientById(clientId: UUID, newName: String): F[Completion] = {
-        logger.info("Updating Client By Id") >> clientRepository.updateClient(clientId = clientId, name = newName)
+        logger.info(s"Updating Client By Id: $clientId") *> clientRepository.updateClient(clientId, newName)
       }
 
       override def removeClientById(clientId: UUID): F[Completion] = {
-        clientRepository.deleteClient(clientId)
+        logger.info(s"Removing Client with id: $clientId") *> clientRepository.deleteClient(clientId)
+      }
+
+      override def getAllClient: F[List[Client]] = {
+        logger.info("Getting all clients") *> clientRepository.getAllClients
       }
     }
 }

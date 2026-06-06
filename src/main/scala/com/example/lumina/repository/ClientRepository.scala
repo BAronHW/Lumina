@@ -42,6 +42,12 @@ class ClientRepository[F[_]: Concurrent](session: Resource[F, Session[F]]) {
     }
   }
 
+  def getAllClients: F[List[Client]] = {
+    session.use { s =>
+      s.execute(ClientRepositoryQueries.getAllClient)
+    }
+  }
+
   private object ClientRepositoryQueries {
     private val clientCodec: Codec[Client] = (uuid *: varchar).to[Client]
     private val clientValues = (uuid *: varchar).values.to[Client]
@@ -57,5 +63,8 @@ class ClientRepository[F[_]: Concurrent](session: Resource[F, Session[F]]) {
 
     val deleteClient: Command[UUID] =
       sql"DELETE FROM client WHERE id = $uuid".command
+
+    val getAllClient: Query[Void, Client] =
+      sql"SELECT id, name FROM client".query(clientCodec)
   }
 }

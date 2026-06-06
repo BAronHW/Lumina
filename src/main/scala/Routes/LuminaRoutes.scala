@@ -46,4 +46,10 @@ object LuminaRoutes:
           result <- service.removeClientById(id)
           resp <- Ok(result.toString)
         } yield resp
+
+      case GET -> Root / "clients" =>
+        for {
+          result <- service.getAllClient
+          resp <- Ok(result)
+        } yield resp
     }
