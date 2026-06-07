@@ -1,9 +1,5 @@
 package com.example.lumina.repository
 
-class IngestRepository {
+class IngestRepository {}
 
-}
-
-private object IngestRepositoryQueries {
-  
-}
+private object IngestRepositoryQueries {}
