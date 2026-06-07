@@ -1,12 +1,12 @@
 package com.example.lumina
 import Routes.LuminaRoutes
 import cats.effect.{Async, Resource}
-import cats.effect.std.Console
+import cats.effect.std.{Console, Queue}
 import com.comcast.ip4s.*
 import com.example.lumina.DB.DataBaseConnection
 import com.example.lumina.repository.ClientRepository
-import com.example.lumina.services.ClientService
-import com.example.lumina.types.Config
+import com.example.lumina.services.{ClientService, IngestBuffer}
+import com.example.lumina.types.{Config, Span}
 import fs2.io.net.Network
 import org.http4s.ember.client.EmberClientBuilder
 import org.http4s.ember.server.EmberServerBuilder
@@ -28,6 +28,8 @@ object LuminaServer:
         )
       )
       pooled <- DataBaseConnection.pooled(conf)
+      queue <- Resource.eval(Queue.bounded[F, List[Span]](256))
+      ingestBuffer = new IngestBuffer[F, List[Span]](queue)
       logger = LoggerFactory[F].getLogger
       clientRepository = new ClientRepository(pooled)
       clientService = ClientService.impl[F](clientRepository, logger)
