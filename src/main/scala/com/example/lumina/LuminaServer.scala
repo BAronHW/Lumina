@@ -1,5 +1,5 @@
 package com.example.lumina
-import Routes.ClientRoutes
+import Routes.{ClientRoutes, IngestRoutes}
 import cats.effect.{Async, Resource}
 import cats.effect.std.{Console, Queue}
 import com.comcast.ip4s.*
