@@ -6,7 +6,7 @@ import skunk.data.Completion
 import java.util.UUID
 
 trait IngestService[F[_]] {
-  def receiveSpans(spans: List[Span]): F[Unit]
+  def pushSpans(spans: List[Span]): F[Unit]
   def getSpanById(spanId: UUID): F[Option[Span]]
   def updateSpanById(spanId: UUID): F[Completion]
   def deleteSpanById(spanId: UUID): F[Completion]
@@ -14,8 +14,10 @@ trait IngestService[F[_]] {
 }
 
 object IngestService {
-  def impl[F[_]](): IngestService[F] = new IngestService[F] {
-    override def receiveSpans(spans: List[Span]): F[Unit] = ???
+  def impl[F[_], Span](ingestBuffer: IngestBuffer[F, Span]): IngestService[F] = new IngestService[F] {
+    override def pushSpans(spans: List[Span]): F[Unit] = {
+      ingestBuffer.enqueue(spans)
+    }
 
     override def getSpanById(spanId: UUID): F[Option[Span]] = ???
 
