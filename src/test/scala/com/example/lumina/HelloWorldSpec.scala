@@ -1,6 +1,6 @@
 package com.example.lumina
 
-import Routes.LuminaRoutes
+import Routes.ClientRoutes
 import cats.effect.IO
 import com.example.lumina.services.HelloWorld
 import org.http4s.*
@@ -20,4 +20,4 @@ class HelloWorldSpec extends CatsEffectSuite:
   private[this] val retHelloWorld: IO[Response[IO]] = 
     val getHW = Request[IO](Method.GET, uri"/hello/world")
     val helloWorld = HelloWorld.impl[IO]
-    LuminaRoutes.helloWorldRoutes(helloWorld).orNotFound(getHW)
+    ClientRoutes.helloWorldRoutes(helloWorld).orNotFound(getHW)

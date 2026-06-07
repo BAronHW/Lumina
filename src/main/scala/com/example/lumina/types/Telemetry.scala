@@ -1,8 +1,17 @@
 package com.example.lumina.types
 
 import java.time.OffsetDateTime
+import java.time.format.DateTimeFormatter
+import java.util.UUID
 import io.circe.{Json, Encoder, Decoder}
 import io.circe.generic.semiauto.*
+
+// Circe codecs for Java time types
+given Encoder[OffsetDateTime] = Encoder[String].contramap(_.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME))
+given Decoder[OffsetDateTime] = Decoder[String].emap { s =>
+  try Right(OffsetDateTime.parse(s, DateTimeFormatter.ISO_OFFSET_DATE_TIME))
+  catch case e: Exception => Left(s"Invalid ISO 8601 datetime: $s")
+}
 
 enum SpanKind:
   case Trace, LlmCall, ToolCall, Retrieval, AgentCall, Custom
@@ -25,19 +34,20 @@ object SpanStatus:
   }
 
 case class Span(
-    spanId: String,
-    traceId: String,
-    parentSpanId: Option[String],
+    spanId: UUID,
+    traceId: UUID,
+    parentSpanId: Option[UUID],
     name: String,
     kind: SpanKind,
     startedAt: OffsetDateTime,
-    endedAt: OffsetDateTime,
+    endedAt: Option[OffsetDateTime],
+    durationMs: Option[Int],
     status: SpanStatus,
     error: Option[String],
     input: Json,
     output: Json,
     attributes: Json,
-    agentId: String,
+    agentId: UUID,
     tags: Map[String, String]
 )
 
@@ -46,12 +56,12 @@ object Span:
   given Decoder[Span] = deriveDecoder[Span]
 
 case class Trace(
-    traceId: String,
+    traceId: UUID,
     name: String,
-    agentId: String,
+    agentId: UUID,
     status: SpanStatus,
     startedAt: OffsetDateTime,
-    endedAt: OffsetDateTime,
+    endedAt: Option[OffsetDateTime],
     totalCostUsd: Option[BigDecimal],
     tags: Map[String, String],
     spans: List[Span]

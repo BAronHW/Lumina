@@ -30,6 +30,7 @@ CREATE TABLE IF NOT EXISTS trace (
   name           VARCHAR NOT NULL,
   kind           VARCHAR NOT NULL,
   status         span_status NOT NULL,
+  error          TEXT,
   started_at     TIMESTAMPTZ NOT NULL,
   ended_at       TIMESTAMPTZ,
   duration_ms    INTEGER,

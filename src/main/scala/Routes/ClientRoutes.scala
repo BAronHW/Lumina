@@ -12,7 +12,7 @@ import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.dsl.Http4sDsl
 import io.circe.generic.auto.*
 
-object LuminaRoutes:
+object ClientRoutes:
 
   private case class CreateClientRequest(name: String)
   private case class UpdateClientRequest(name: String)

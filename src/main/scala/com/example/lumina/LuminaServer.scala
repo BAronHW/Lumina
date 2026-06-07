@@ -1,5 +1,5 @@
 package com.example.lumina
-import Routes.LuminaRoutes
+import Routes.ClientRoutes
 import cats.effect.{Async, Resource}
 import cats.effect.std.{Console, Queue}
 import com.comcast.ip4s.*
@@ -36,7 +36,7 @@ object LuminaServer:
       client <- EmberClientBuilder.default[F].build
 
       httpApp = (
-        LuminaRoutes.clientRoutes[F](clientService)
+        ClientRoutes.clientRoutes[F](clientService)
       ).orNotFound
 
       finalHttpApp = Logger.httpApp(true, true)(httpApp)
