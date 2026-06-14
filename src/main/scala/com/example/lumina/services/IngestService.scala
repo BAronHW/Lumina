@@ -14,10 +14,9 @@ trait IngestService[F[_]] {
 }
 
 object IngestService {
-  def impl[F[_]](ingestBuffer: IngestBuffer[F, List[Span]]): IngestService[F] = new IngestService[F] {
-    override def pushSpans(spans: List[Span]): F[Unit] = {
+  def impl[F[_]](ingestBuffer: IngestBuffer[F, Span]): IngestService[F] = new IngestService[F] {
+    override def pushSpans(spans: List[Span]): F[Unit] =
       ingestBuffer.enqueue(spans)
-    }
 
     override def getSpanById(spanId: UUID): F[Option[Span]] = ???
 
