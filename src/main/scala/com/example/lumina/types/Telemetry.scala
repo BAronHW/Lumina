@@ -70,3 +70,11 @@ case class Trace(
 object Trace:
   given Encoder[Trace] = deriveEncoder[Trace]
   given Decoder[Trace] = deriveDecoder[Trace]
+
+case class CreateSpanRequest(
+    spans: List[Span]
+)
+
+object CreateSpanRequest:
+  given Encoder[CreateSpanRequest] = deriveEncoder[CreateSpanRequest]
+  given Decoder[CreateSpanRequest] = deriveDecoder[CreateSpanRequest]
