@@ -1,18 +1,44 @@
 package com.example.lumina.repository
 
 import Domain.Span
+import cats.effect.{Concurrent, Resource}
 import com.example.lumina.types.{SpanKind, SpanStatus}
 import skunk.*
-import skunk.data.Type
+import skunk.data.{Completion, Type}
 import skunk.implicits.*
 import skunk.codec.all.*
 import skunk.circe.codec.all.jsonb
+import cats.syntax.all.*
 
 import java.util.UUID
 
-class IngestRepository {}
+class SpanRepository[F[_]: Concurrent](session: Resource[F, Session[F]]) {
+  def createSpan(spanBody: Span): F[Completion] = {
+    session.use { s =>
+      s.prepare(SpanRepositoryQueries.createSpan).flatMap(ps => ps.execute(spanBody))
+    }
+  }
 
-private object IngestRepositoryQueries {
+  def getSpanById(spanId: UUID): F[Option[Span]] = {
+    session.use { s =>
+      s.prepare(SpanRepositoryQueries.selectSpanById).flatMap(pq => pq.option(spanId))
+    }
+  }
+
+  def deleteSpanById(spanId: UUID): F[Completion] = {
+    session.use { s =>
+      s.prepare(SpanRepositoryQueries.deleteSpanById).flatMap(pq => pq.execute(spanId))
+    }
+  }
+
+  def updateSpanById(spanBody: Span): F[Completion] = {
+    session.use { s =>
+      s.prepare(SpanRepositoryQueries.updateSpanById).flatMap(pg => pg.execute(spanBody))
+    }
+  }
+}
+
+private object SpanRepositoryQueries {
   private val spanKindCodec: Codec[SpanKind] =
     varchar.imap(SpanKind.valueOf)(_.toString)
 
