@@ -9,6 +9,7 @@ import skunk.implicits.*
 import skunk.codec.all.*
 import skunk.circe.codec.all.jsonb
 import cats.syntax.all.*
+import cats.Monad.*
 
 import java.util.UUID
 
@@ -34,6 +35,12 @@ class SpanRepository[F[_]: Concurrent](session: Resource[F, Session[F]]) {
   def updateSpanById(spanBody: Span): F[Completion] = {
     session.use { s =>
       s.prepare(SpanRepositoryQueries.updateSpanById).flatMap(pg => pg.execute(spanBody))
+    }
+  }
+
+  def createBatchSpan(spanList: List[Span]): F[Completion] = {
+    session.use { s =>
+      s.prepare(SpanRepositoryQueries.createBatchSpan(spanList)).flatMap(pg => pg.execute(spanList))
     }
   }
 }

@@ -7,7 +7,7 @@ import java.util.UUID
 
 trait SpanService[F[_]] {
   def getSpanById(spanId: UUID): F[Option[Span]]
-  def createSpan(spanList: List[Span]): F[List[Span]]
+  def createBatchSpan(spanList: List[Span]): F[Completion]
   def updateSpan(span: Span): F[Completion]
   def deleteSpanById(spanId: UUID): F[Completion]
 }
@@ -16,7 +16,7 @@ trait SpanService[F[_]] {
  *  and should also wait until the buffer reaches a certain size before it creates them in batches by a certain time
  * */
 object SpanService {
-  def impl[F[_]](ingestBuffer: IngestBuffer[F, Span], spanRepository: SpanRepository[F]): SpanService[F] = new SpanService[F] {
+  def impl[F[_]](spanRepository: SpanRepository[F]): SpanService[F] = new SpanService[F] {
     override def getSpanById(spanId: UUID): F[Option[Span]] = {
       spanRepository.getSpanById(spanId)
     }
@@ -27,6 +27,10 @@ object SpanService {
 
     override def deleteSpanById(spanId: UUID): F[Completion] = {
       spanRepository.deleteSpanById(spanId)
+    }
+
+    override def createBatchSpan(spanList: List[Span]): F[Completion] = {
+      spanRepository.createBatchSpan(spanList)
     }
   }
 }
