@@ -1,12 +1,14 @@
 package com.example.lumina
-import Routes.{ClientRoutes}
+import Domain.Span
+import Routes.{ClientRoutes, IngestRoutes}
+import cats.syntax.semigroupk.*
 import cats.effect.{Async, Resource}
 import cats.effect.std.{Console, Queue}
 import com.comcast.ip4s.*
 import com.example.lumina.DB.DataBaseConnection
 import com.example.lumina.repository.ClientRepository
-import com.example.lumina.services.{ClientService, IngestBuffer}
-import com.example.lumina.types.{Config, Span}
+import com.example.lumina.services.{ClientService, IngestBuffer, IngestService}
+import com.example.lumina.types.Config
 import fs2.io.net.Network
 import org.http4s.ember.client.EmberClientBuilder
 import org.http4s.ember.server.EmberServerBuilder
@@ -28,15 +30,17 @@ object LuminaServer:
         )
       )
       pooled <- DataBaseConnection.pooled(conf)
-      queue <- Resource.eval(Queue.bounded[F, List[Span]](256))
-      ingestBuffer = new IngestBuffer[F, List[Span]](queue)
+      queue <- Resource.eval(Queue.bounded[F, Span](256))
+      ingestBuffer = new IngestBuffer[F, Span](queue)
       logger = LoggerFactory[F].getLogger
       clientRepository = new ClientRepository(pooled)
       clientService = ClientService.impl[F](clientRepository, logger)
+      ingestService = IngestService.impl[F](ingestBuffer)
       client <- EmberClientBuilder.default[F].build
 
       httpApp = (
-        ClientRoutes.clientRoutes[F](clientService)
+        ClientRoutes.clientRoutes[F](clientService) <+>
+          IngestRoutes.ingestRoutes[F](ingestService)
       ).orNotFound
 
       finalHttpApp = Logger.httpApp(true, true)(httpApp)

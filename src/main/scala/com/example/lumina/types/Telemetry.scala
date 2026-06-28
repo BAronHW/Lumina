@@ -1,9 +1,11 @@
 package com.example.lumina.types
 
+import Domain.Span
+
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 import java.util.UUID
-import io.circe.{Json, Encoder, Decoder}
+import io.circe.{Decoder, Encoder, Json}
 import io.circe.generic.semiauto.*
 
 // Circe codecs for Java time types
@@ -32,24 +34,6 @@ object SpanStatus:
     case "error" => Right(SpanStatus.Error)
     case other   => Left(s"Invalid SpanStatus: $other")
   }
-
-case class Span(
-    spanId: UUID,
-    traceId: UUID,
-    parentSpanId: Option[UUID],
-    name: String,
-    kind: SpanKind,
-    startedAt: OffsetDateTime,
-    endedAt: Option[OffsetDateTime],
-    durationMs: Option[Int],
-    status: SpanStatus,
-    error: Option[String],
-    input: Json,
-    output: Json,
-    attributes: Json,
-    agentId: UUID,
-    tags: Map[String, String]
-)
 
 object Span:
   given Encoder[Span] = deriveEncoder[Span]
