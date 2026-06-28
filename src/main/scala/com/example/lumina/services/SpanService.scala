@@ -7,7 +7,7 @@ import java.util.UUID
 
 trait SpanService[F[_]] {
   def getSpanById(spanId: UUID): F[Option[Span]]
-  def getAllSpans: F[List[Span]]
+  def createSpan(spanList: List[Span]): F[List[Span]]
   def updateSpan(span: Span): F[Completion]
   def deleteSpanById(spanId: UUID): F[Completion]
 }
@@ -17,6 +17,16 @@ trait SpanService[F[_]] {
  * */
 object SpanService {
   def impl[F[_]](ingestBuffer: IngestBuffer[F, Span], spanRepository: SpanRepository[F]): SpanService[F] = new SpanService[F] {
-    
+    override def getSpanById(spanId: UUID): F[Option[Span]] = {
+      spanRepository.getSpanById(spanId)
+    }
+
+    override def updateSpan(span: Span): F[Completion] = {
+      spanRepository.updateSpanById(spanBody = span)
+    }
+
+    override def deleteSpanById(spanId: UUID): F[Completion] = {
+      spanRepository.deleteSpanById(spanId)
+    }
   }
 }
