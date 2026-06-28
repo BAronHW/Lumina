@@ -2,14 +2,13 @@ package com.example.lumina.repository
 
 import Domain.Span
 import cats.effect.{Concurrent, Resource}
+import cats.syntax.all.*
 import com.example.lumina.types.{SpanKind, SpanStatus}
 import skunk.*
+import skunk.circe.codec.all.jsonb
+import skunk.codec.all.*
 import skunk.data.{Completion, Type}
 import skunk.implicits.*
-import skunk.codec.all.*
-import skunk.circe.codec.all.jsonb
-import cats.syntax.all.*
-import cats.Monad.*
 
 import java.util.UUID
 
