@@ -1,6 +1,6 @@
 package com.example.lumina.repository
 
-import Domain.Trace
+import Domain.{Pagination, Trace}
 import cats.effect.Concurrent
 import cats.effect.kernel.Resource
 import com.example.lumina.types.SpanStatus
@@ -34,6 +34,11 @@ class TraceRepository[F[_]: Concurrent](session: Resource[F, Session[F]]) {
     session.use { s =>
       s.prepare(TraceRepositoryQueries.deleteTrace).flatMap(ps => ps.execute(traceId))
     }
+
+  def getAllTraces(pagination: Pagination): F[List[Trace]] =
+    session.use { s =>
+      s.prepare(TraceRepositoryQueries.selectAllTraces).flatMap(ps => ps.stream(pagination, 64).compile.toList)
+    }
 }
 
 private object TraceRepositoryQueries {
@@ -57,6 +62,11 @@ private object TraceRepositoryQueries {
 
   val selectTrace: Query[UUID, Trace] =
     sql"SELECT * FROM trace WHERE id = $uuid".query(traceCodec)
+
+  val selectAllTraces: Query[Pagination, Trace] =
+    sql"SELECT * FROM trace ORDER BY started_at DESC LIMIT ${int4} OFFSET ${int4}"
+      .query(traceCodec)
+      .contramap[Pagination](p => p.limit *: p.offset *: EmptyTuple)
 
   val deleteTrace: Command[UUID] =
     sql"DELETE FROM trace WHERE id = $uuid".command

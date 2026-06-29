@@ -1,6 +1,6 @@
 package com.example.lumina.repository
 
-import Domain.Span
+import Domain.{Pagination, Span}
 import cats.effect.{Concurrent, Resource}
 import cats.syntax.all.*
 import com.example.lumina.types.{SpanKind, SpanStatus}
@@ -42,6 +42,11 @@ class SpanRepository[F[_]: Concurrent](session: Resource[F, Session[F]]) {
       s.prepare(SpanRepositoryQueries.createBatchSpan(spanList)).flatMap(pg => pg.execute(spanList))
     }
   }
+
+  def getAllSpans(pagination: Pagination): F[List[Span]] =
+    session.use { s =>
+      s.prepare(SpanRepositoryQueries.selectAllSpans).flatMap(ps => ps.stream(pagination, 64).compile.toList)
+    }
 }
 
 private object SpanRepositoryQueries {
@@ -71,6 +76,11 @@ private object SpanRepositoryQueries {
   val selectSpanById: Query[UUID, Span] = {
     sql"SELECT * FROM span WHERE id = $uuid".query(spanCodec)
   }
+
+  val selectAllSpans: Query[Pagination, Span] =
+    sql"SELECT * FROM span ORDER BY started_at DESC LIMIT ${int4} OFFSET ${int4}"
+      .query(spanCodec)
+      .contramap[Pagination](p => p.limit *: p.offset *: EmptyTuple)
 
   val deleteSpanById: Command[UUID] = {
     sql"DELETE FROM span WHERE id = $uuid".command
