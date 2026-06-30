@@ -8,7 +8,11 @@ trait TraceAssemblyService[F[_]] {
 }
 
 object TraceAssemblyService {
-  def impl[F[_]](ingestBuffer: IngestBuffer[F, Span]): TraceAssemblyService[F] = new TraceAssemblyService[F] {
+  def impl[F[_]](
+      ingestBuffer: IngestBuffer[F, Span],
+      spanService: SpanService[F],
+      traceService: TraceService[F]
+  ): TraceAssemblyService[F] = new TraceAssemblyService[F] {
 
     /** This function will take spans contained in the ingest buffer and then generate them using the span service. It
       * will also use the trace service to group spans together when the final span arrives which is denoted if a span
