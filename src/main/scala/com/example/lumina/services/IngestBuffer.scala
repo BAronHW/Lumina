@@ -1,6 +1,6 @@
 package com.example.lumina.services
 
-import cats.Monad
+import cats.effect.Concurrent
 import cats.effect.std.Queue
 import cats.syntax.all.*
 
@@ -14,7 +14,7 @@ trait Buffer[F[_], A] {
   def tryTakeN(num: Int): F[List[A]]
 }
 
-class IngestBuffer[F[_]: Monad, A](ingestQueue: Queue[F, A]) extends Buffer[F, A] {
+class IngestBuffer[F[_]: Concurrent, A](ingestQueue: Queue[F, A]) extends Buffer[F, A] {
   override def enqueue(obj: List[A]): F[Unit] =
     obj.traverse_(ingestQueue.offer)
 
@@ -45,5 +45,4 @@ class IngestBuffer[F[_]: Monad, A](ingestQueue: Queue[F, A]) extends Buffer[F, A
       items <- this.ingestQueue.tryTakeN(Some(num))
     } yield (items)
   }
-
 }
