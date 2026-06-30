@@ -11,6 +11,7 @@ trait Buffer[F[_], A] {
   def tryEnqueue(obj: A): F[Boolean]
   def tryTake: F[Option[A]]
   def flushAll: F[Boolean]
+  def tryTakeN(num: Int): F[List[A]]
 }
 
 class IngestBuffer[F[_]: Monad, A](ingestQueue: Queue[F, A]) extends Buffer[F, A] {
@@ -37,6 +38,12 @@ class IngestBuffer[F[_]: Monad, A](ingestQueue: Queue[F, A]) extends Buffer[F, A
     for {
       items <- this.ingestQueue.tryTakeN(None)
     } yield (items.nonEmpty)
+  }
+
+  override def tryTakeN(num: Int): F[List[A]] = {
+    for {
+      items <- this.ingestQueue.tryTakeN(Some(num))
+    } yield (items)
   }
 
 }
