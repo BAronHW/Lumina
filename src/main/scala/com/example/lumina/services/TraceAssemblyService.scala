@@ -56,6 +56,6 @@ object TraceAssemblyService {
     /** Checks all spans that it comes by if any of them have the endsWithField. If they do we then group all of them
       * together into a single trace
       */
-    def createTraceGroup(spanList: List[Span]): F[Completion] = {}
+    def createTraceGroup(spanList: List[Span]): F[Completion] = ???
   }
 }
