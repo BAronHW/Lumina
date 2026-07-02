@@ -11,6 +11,7 @@ trait TraceService[F[_]] {
   def deleteTrace(traceId: UUID): F[Completion]
   def selectTrace(traceId: UUID): F[Option[Trace]]
   def updateTrace(traceBody: Trace): F[Completion]
+  def batchCreateTrace(traceBody: List[Trace]): F[Completion]
 }
 
 object TraceService {
@@ -29,6 +30,10 @@ object TraceService {
 
     override def updateTrace(traceBody: Trace): F[Completion] = {
       traceRepository.updateTrace(traceBody)
+    }
+
+    override def batchCreateTrace(traceBody: List[Trace]): F[Completion] = {
+      traceRepository
     }
   }
 }

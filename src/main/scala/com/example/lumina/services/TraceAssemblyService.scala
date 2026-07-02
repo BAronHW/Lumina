@@ -5,6 +5,8 @@ import cats.effect.Concurrent
 import cats.syntax.all.*
 import skunk.data.Completion
 
+import java.util.UUID
+
 trait TraceAssemblyService[F[_]] {
   def processSpans(spans: List[Span], chunksToTake: Int): F[Boolean]
   def flush: F[Boolean]
@@ -24,7 +26,7 @@ object TraceAssemblyService {
     override def processSpans(spans: List[Span], chunksToTake: Int): F[Boolean] = {
       for {
         items <- ingestBuffer.tryTakeN(chunksToTake)
-        containsEndedAt = spanListHasEnd(items)
+        completion <- spanService.createBatchSpan(items)
 
       } yield () // WIP
     }
@@ -47,15 +49,25 @@ object TraceAssemblyService {
       }
     }
 
-    /** Returns a boolean that represents if the list of span has an element who's endsAt field is defined
+    /** Finds all root spans (parentSpanId = None, endedAt = Some) in the given span list. For each root span, fetches
+      * its corresponding Trace record from the DB and updates it with the root span's endedAt and status, marking the
+      * trace as complete. Traces are created explicitly via the SDK before spans arrive, so this only updates existing
+      * records.
       */
-    def spanListHasEnd(spanList: List[Span]): Boolean = {
-      spanList.exists(span => span.endedAt.isDefined)
+    def createTraceGroup(spanList: List[Span]): Map[UUID, List[Span]] = {
+      spanList
+        .filter(span => span.endedAt.isDefined)
+        .groupBy(span => span.traceId)
     }
 
-    /** Checks all spans that it comes by if any of them have the endsWithField. If they do we then group all of them
-      * together into a single trace
-      */
-    def createTraceGroup(spanList: List[Span]): F[Completion] = ???
+    def updateCompletedTrace(spanList: List[Span]) = {
+      val traceIdMap = spanList
+        .filter(span => span.endedAt.isDefined)
+        .groupBy(span => span.traceId)
+
+      val traceIdList = traceIdMap.keys.toList
+
+      traceService.createTrace()
+    }
   }
 }

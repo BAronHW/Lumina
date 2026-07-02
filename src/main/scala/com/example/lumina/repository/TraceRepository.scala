@@ -39,6 +39,12 @@ class TraceRepository[F[_]: Concurrent](session: Resource[F, Session[F]]) {
     session.use { s =>
       s.prepare(TraceRepositoryQueries.selectAllTraces).flatMap(ps => ps.stream(pagination, 64).compile.toList)
     }
+
+  def batchCreateTraces(traces: List[Trace]): F[Completion] = {
+    session.use { s =>
+      s.prepare(TraceRepositoryQueries.batchCreateTrace).flatMap(ps => ps.execute(traces))
+    }
+  }
 }
 
 private object TraceRepositoryQueries {
@@ -79,4 +85,9 @@ private object TraceRepositoryQueries {
           WHERE id = $uuid""".command.contramap[Trace] { t =>
       t.agentId *: t.name *: t.status *: t.startedAt *: t.endedAt *: t.totalCostUsd *: t.tags *: t.id *: EmptyTuple
     }
+
+  def batchCreateTrace(traceList: List[Trace]): Command[traceList.type] = {
+    val enc = traceCodec.list(traceList)
+    sql"INSERT INTO trace VALUES $enc".command
+  }
 }
