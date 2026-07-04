@@ -49,17 +49,6 @@ object TraceAssemblyService {
       }
     }
 
-    /** Finds all root spans (parentSpanId = None, endedAt = Some) in the given span list. For each root span, fetches
-      * its corresponding Trace record from the DB and updates it with the root span's endedAt and status, marking the
-      * trace as complete. Traces are created explicitly via the SDK before spans arrive, so this only updates existing
-      * records.
-      */
-    def createTraceGroup(spanList: List[Span]): Map[UUID, List[Span]] = {
-      spanList
-        .filter(span => span.endedAt.isDefined)
-        .groupBy(span => span.traceId)
-    }
-
     /** Given a list of spans this function filters all spans so that only spans that have a defined endedAt field
       * remain. We then group these remaining spans by their TraceId's and then we get the keys which are the traceId
       * and then turn them into a list
