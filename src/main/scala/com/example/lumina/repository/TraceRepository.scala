@@ -45,6 +45,18 @@ class TraceRepository[F[_]: Concurrent](session: Resource[F, Session[F]]) {
       s.prepare(TraceRepositoryQueries.batchCreateTrace(traces)).flatMap(ps => ps.execute(traces))
     }
   }
+
+  def batchUpdateTraces(traces: List[Trace]): F[Completion] = {
+    session.use { s =>
+      s.prepare(TraceRepositoryQueries.batchUpdateTrace(traces)).flatMap(ps => ps.execute(traces))
+    }
+  }
+
+  def updateTraceBatchWithIds(traceIds: List[UUID]): F[Completion] = {
+    session.use { s =>
+      s.prepare(TraceRepositoryQueries.updateTraceBatchWithIds(traceIds)).flatMap(ps => ps.execute((traceIds)))
+    }
+  }
 }
 
 private object TraceRepositoryQueries {
@@ -91,5 +103,23 @@ private object TraceRepositoryQueries {
     sql"INSERT INTO trace VALUES $enc".command
   }
 
-  def batchUpdateTrace(traceList: List[Trace]): Command[traceList.type] = ???
+  def batchUpdateTrace(traceList: List[Trace]): Command[traceList.type] = {
+    val enc = (uuid *: timestamptz.opt *: spanStatusCodec)
+      .contramap[Trace](t => t.id *: t.endedAt *: t.status *: EmptyTuple)
+      .list(traceList)
+    sql"""UPDATE trace
+            SET ended_at = v.ended_at,
+                status   = v.status::span_status
+            FROM (VALUES $enc) AS v(id, ended_at, status)
+           WHERE trace.id = v.id::uuid""".command
+  }
+
+  def updateTraceBatchWithIds(ids: List[UUID]): Command[ids.type] = {
+    val enc = uuid.list(ids)
+    sql"""UPDATE trace
+              SET ended_at = NOW(),
+                  status = 'ok'::span_status
+              FROM (VALUES $enc) AS v(id)
+             WHERE trace.id = v.id::uuid""".command
+  }
 }

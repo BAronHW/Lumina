@@ -26,9 +26,9 @@ object TraceAssemblyService {
     override def processSpans(spans: List[Span], chunksToTake: Int): F[Boolean] = {
       for {
         items <- ingestBuffer.tryTakeN(chunksToTake)
-        completion <- spanService.createBatchSpan(items)
-
-      } yield () // WIP
+        completion <- spanService.createBatchSpan(items) // Might be a good idea to actually throw an error here
+        traceCompletion <- updateCompletedTrace(items)
+      } yield (traceCompletion)
     }
 
     /** This function flushes the ingest buffer so that all spans that were in the buffer will now be removed. The
@@ -60,14 +60,18 @@ object TraceAssemblyService {
         .groupBy(span => span.traceId)
     }
 
-    def updateCompletedTrace(spanList: List[Span]) = {
-      val traceIdMap = spanList
+    /** Given a list of spans this function filters all spans so that only spans that have a defined endedAt field
+      * remain. We then group these remaining spans by their TraceId's and then we get the keys which are the traceId
+      * and then turn them into a list
+      */
+    def updateCompletedTrace(spanList: List[Span]): F[Boolean] = {
+      val traceIdList = spanList
         .filter(span => span.endedAt.isDefined)
         .groupBy(span => span.traceId)
+        .keys
+        .toList
 
-      val traceIdList = traceIdMap.keys.toList
-
-      traceService
+      traceService.updateBatchTracesWithId(traceIdList).map(res => completionToBool(res))
     }
   }
 }

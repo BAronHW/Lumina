@@ -13,6 +13,7 @@ trait TraceService[F[_]] {
   def updateTrace(traceBody: Trace): F[Completion]
   def batchCreateTrace(traceBody: List[Trace]): F[Completion]
   def batchUpdateTraces(traces: List[Trace]): F[Completion]
+  def updateBatchTracesWithId(traceIds: List[UUID]): F[Completion]
 }
 
 object TraceService {
@@ -37,6 +38,12 @@ object TraceService {
       traceRepository.batchCreateTraces(traceBodyBatch)
     }
 
-    override def batchUpdateTraces(traces: List[Trace]): F[Completion] = ???
+    override def batchUpdateTraces(traces: List[Trace]): F[Completion] = {
+      traceRepository.batchUpdateTraces(traces)
+    }
+
+    override def updateBatchTracesWithId(traceIds: List[UUID]): F[Completion] = {
+      traceRepository.updateTraceBatchWithIds(traceIds)
+    }
   }
 }
