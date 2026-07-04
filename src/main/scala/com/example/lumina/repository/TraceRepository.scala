@@ -57,69 +57,69 @@ class TraceRepository[F[_]: Concurrent](session: Resource[F, Session[F]]) {
       s.prepare(TraceRepositoryQueries.updateTraceBatchWithIds(traceIds)).flatMap(ps => ps.execute((traceIds)))
     }
   }
-}
 
-private object TraceRepositoryQueries {
+  private object TraceRepositoryQueries {
 
-  private val spanStatusCodec: Codec[SpanStatus] =
-    `enum`(
-      (s: SpanStatus) => s.toString.toLowerCase,
-      (s: String) => SpanStatus.values.find(_.toString.toLowerCase == s),
-      Type("span_status")
-    )
+    private val spanStatusCodec: Codec[SpanStatus] =
+      `enum`(
+        (s: SpanStatus) => s.toString.toLowerCase,
+        (s: String) => SpanStatus.values.find(_.toString.toLowerCase == s),
+        Type("span_status")
+      )
 
-  private val tagsCodec: Codec[Map[String, String]] =
-    jsonb.imap(_.as[Map[String, String]].getOrElse(Map.empty))(tags => CEncoder[Map[String, String]].apply(tags))
+    private val tagsCodec: Codec[Map[String, String]] =
+      jsonb.imap(_.as[Map[String, String]].getOrElse(Map.empty))(tags => CEncoder[Map[String, String]].apply(tags))
 
-  private val traceCodec: Codec[Trace] =
-    (uuid *: uuid *: varchar *: spanStatusCodec *:
-      timestamptz *: timestamptz.opt *: numeric.opt *: tagsCodec).to[Trace]
+    private val traceCodec: Codec[Trace] =
+      (uuid *: uuid *: varchar *: spanStatusCodec *:
+        timestamptz *: timestamptz.opt *: numeric.opt *: tagsCodec).to[Trace]
 
-  val createTrace: Command[Trace] =
-    sql"INSERT INTO trace VALUES ${traceCodec.values}".command
+    val createTrace: Command[Trace] =
+      sql"INSERT INTO trace VALUES ${traceCodec.values}".command
 
-  val selectTrace: Query[UUID, Trace] =
-    sql"SELECT * FROM trace WHERE id = $uuid".query(traceCodec)
+    val selectTrace: Query[UUID, Trace] =
+      sql"SELECT * FROM trace WHERE id = $uuid".query(traceCodec)
 
-  val selectAllTraces: Query[Pagination, Trace] =
-    sql"SELECT * FROM trace ORDER BY started_at DESC LIMIT ${int4} OFFSET ${int4}"
-      .query(traceCodec)
-      .contramap[Pagination](p => p.limit *: p.offset *: EmptyTuple)
+    val selectAllTraces: Query[Pagination, Trace] =
+      sql"SELECT * FROM trace ORDER BY started_at DESC LIMIT ${int4} OFFSET ${int4}"
+        .query(traceCodec)
+        .contramap[Pagination](p => p.limit *: p.offset *: EmptyTuple)
 
-  val deleteTrace: Command[UUID] =
-    sql"DELETE FROM trace WHERE id = $uuid".command
+    val deleteTrace: Command[UUID] =
+      sql"DELETE FROM trace WHERE id = $uuid".command
 
-  val updateTrace: Command[Trace] =
-    sql"""UPDATE trace SET
-            agent_id = $uuid, name = $varchar, status = $spanStatusCodec,
-            started_at = $timestamptz, ended_at = ${timestamptz.opt},
-            total_cost_usd = ${numeric.opt}, tags = $tagsCodec
-          WHERE id = $uuid""".command.contramap[Trace] { t =>
-      t.agentId *: t.name *: t.status *: t.startedAt *: t.endedAt *: t.totalCostUsd *: t.tags *: t.id *: EmptyTuple
+    val updateTrace: Command[Trace] =
+      sql"""UPDATE trace SET
+              agent_id = $uuid, name = $varchar, status = $spanStatusCodec,
+              started_at = $timestamptz, ended_at = ${timestamptz.opt},
+              total_cost_usd = ${numeric.opt}, tags = $tagsCodec
+            WHERE id = $uuid""".command.contramap[Trace] { t =>
+        t.agentId *: t.name *: t.status *: t.startedAt *: t.endedAt *: t.totalCostUsd *: t.tags *: t.id *: EmptyTuple
+      }
+
+    def batchCreateTrace(traceList: List[Trace]): Command[traceList.type] = {
+      val enc = traceCodec.list(traceList)
+      sql"INSERT INTO trace VALUES $enc".command
     }
 
-  def batchCreateTrace(traceList: List[Trace]): Command[traceList.type] = {
-    val enc = traceCodec.list(traceList)
-    sql"INSERT INTO trace VALUES $enc".command
-  }
-
-  def batchUpdateTrace(traceList: List[Trace]): Command[traceList.type] = {
-    val enc = (uuid *: timestamptz.opt *: spanStatusCodec)
-      .contramap[Trace](t => t.id *: t.endedAt *: t.status *: EmptyTuple)
-      .list(traceList)
-    sql"""UPDATE trace
-            SET ended_at = v.ended_at,
-                status   = v.status::span_status
-            FROM (VALUES $enc) AS v(id, ended_at, status)
-           WHERE trace.id = v.id::uuid""".command
-  }
-
-  def updateTraceBatchWithIds(ids: List[UUID]): Command[ids.type] = {
-    val enc = uuid.list(ids)
-    sql"""UPDATE trace
-              SET ended_at = NOW(),
-                  status = 'ok'::span_status
-              FROM (VALUES $enc) AS v(id)
+    def batchUpdateTrace(traceList: List[Trace]): Command[traceList.type] = {
+      val enc = (uuid *: timestamptz.opt *: spanStatusCodec)
+        .contramap[Trace](t => t.id *: t.endedAt *: t.status *: EmptyTuple)
+        .list(traceList)
+      sql"""UPDATE trace
+              SET ended_at = v.ended_at,
+                  status   = v.status::span_status
+              FROM (VALUES $enc) AS v(id, ended_at, status)
              WHERE trace.id = v.id::uuid""".command
+    }
+
+    def updateTraceBatchWithIds(ids: List[UUID]): Command[ids.type] = {
+      val enc = uuid.list(ids)
+      sql"""UPDATE trace
+                SET ended_at = NOW(),
+                    status = 'ok'::span_status
+                FROM (VALUES $enc) AS v(id)
+               WHERE trace.id = v.id::uuid""".command
+    }
   }
 }

@@ -47,55 +47,55 @@ class SpanRepository[F[_]: Concurrent](session: Resource[F, Session[F]]) {
     session.use { s =>
       s.prepare(SpanRepositoryQueries.selectAllSpans).flatMap(ps => ps.stream(pagination, 64).compile.toList)
     }
-}
 
-private object SpanRepositoryQueries {
-  private val spanKindCodec: Codec[SpanKind] =
-    varchar.imap(SpanKind.valueOf)(_.toString)
+  private object SpanRepositoryQueries {
+    private val spanKindCodec: Codec[SpanKind] =
+      varchar.imap(SpanKind.valueOf)(_.toString)
 
-  private val spanStatusCodec: Codec[SpanStatus] =
-    `enum`(
-      (s: SpanStatus) => s.toString.toLowerCase,
-      (s: String) => SpanStatus.values.find(_.toString.toLowerCase == s),
-      Type("span_status")
-    )
+    private val spanStatusCodec: Codec[SpanStatus] =
+      `enum`(
+        (s: SpanStatus) => s.toString.toLowerCase,
+        (s: String) => SpanStatus.values.find(_.toString.toLowerCase == s),
+        Type("span_status")
+      )
 
-  private val spanCodec: Codec[Span] =
-    (uuid *: uuid *: uuid.opt *: varchar *: spanKindCodec *: spanStatusCodec *:
-      text.opt *: timestamptz *: timestamptz.opt *: int4.opt *:
-      jsonb *: jsonb *: jsonb).to[Span]
+    private val spanCodec: Codec[Span] =
+      (uuid *: uuid *: uuid.opt *: varchar *: spanKindCodec *: spanStatusCodec *:
+        text.opt *: timestamptz *: timestamptz.opt *: int4.opt *:
+        jsonb *: jsonb *: jsonb).to[Span]
 
-  val createSpan: Command[Span] =
-    sql"INSERT INTO span VALUES ${spanCodec.values}".command
+    val createSpan: Command[Span] =
+      sql"INSERT INTO span VALUES ${spanCodec.values}".command
 
-  def createBatchSpan(spanList: List[Span]): Command[spanList.type] = {
-    val enc = spanCodec.values.list(spanList)
-    sql"INSERT INTO span VALUES $enc".command
-  }
+    def createBatchSpan(spanList: List[Span]): Command[spanList.type] = {
+      val enc = spanCodec.values.list(spanList)
+      sql"INSERT INTO span VALUES $enc".command
+    }
 
-  val selectSpanById: Query[UUID, Span] = {
-    sql"SELECT * FROM span WHERE id = $uuid".query(spanCodec)
-  }
+    val selectSpanById: Query[UUID, Span] = {
+      sql"SELECT * FROM span WHERE id = $uuid".query(spanCodec)
+    }
 
-  val selectAllSpans: Query[Pagination, Span] =
-    sql"SELECT * FROM span ORDER BY started_at DESC LIMIT ${int4} OFFSET ${int4}"
-      .query(spanCodec)
-      .contramap[Pagination](p => p.limit *: p.offset *: EmptyTuple)
+    val selectAllSpans: Query[Pagination, Span] =
+      sql"SELECT * FROM span ORDER BY started_at DESC LIMIT ${int4} OFFSET ${int4}"
+        .query(spanCodec)
+        .contramap[Pagination](p => p.limit *: p.offset *: EmptyTuple)
 
-  val deleteSpanById: Command[UUID] = {
-    sql"DELETE FROM span WHERE id = $uuid".command
-  }
+    val deleteSpanById: Command[UUID] = {
+      sql"DELETE FROM span WHERE id = $uuid".command
+    }
 
-  val updateSpanById: Command[Span] =
-    sql"""UPDATE span SET
+    val updateSpanById: Command[Span] =
+      sql"""UPDATE span SET
             trace_id = $uuid, parent_span_id = ${uuid.opt}, name = $varchar,
             kind = $spanKindCodec, status = $spanStatusCodec, error = ${text.opt},
             started_at = $timestamptz, ended_at = ${timestamptz.opt},
             duration_ms = ${int4.opt}, input = $jsonb, output = $jsonb,
             attributes = $jsonb
           WHERE id = $uuid""".command.contramap[Span] { s =>
-      s.traceId *: s.parentSpanId *: s.name *: s.kind *: s.status *:
-        s.error *: s.startedAt *: s.endedAt *: s.durationMs *:
-        s.input *: s.output *: s.attributes *: s.id *: EmptyTuple
-    }
+        s.traceId *: s.parentSpanId *: s.name *: s.kind *: s.status *:
+          s.error *: s.startedAt *: s.endedAt *: s.durationMs *:
+          s.input *: s.output *: s.attributes *: s.id *: EmptyTuple
+      }
+  }
 }
