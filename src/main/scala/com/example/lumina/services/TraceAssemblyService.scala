@@ -67,7 +67,7 @@ object TraceAssemblyService {
 
       val traceIdList = traceIdMap.keys.toList
 
-      traceService.createTrace()
+      traceService
     }
   }
 }

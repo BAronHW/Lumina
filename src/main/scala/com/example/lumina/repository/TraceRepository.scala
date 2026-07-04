@@ -42,7 +42,7 @@ class TraceRepository[F[_]: Concurrent](session: Resource[F, Session[F]]) {
 
   def batchCreateTraces(traces: List[Trace]): F[Completion] = {
     session.use { s =>
-      s.prepare(TraceRepositoryQueries.batchCreateTrace).flatMap(ps => ps.execute(traces))
+      s.prepare(TraceRepositoryQueries.batchCreateTrace(traces)).flatMap(ps => ps.execute(traces))
     }
   }
 }
@@ -90,4 +90,6 @@ private object TraceRepositoryQueries {
     val enc = traceCodec.list(traceList)
     sql"INSERT INTO trace VALUES $enc".command
   }
+
+  def batchUpdateTrace(traceList: List[Trace]): Command[traceList.type] = ???
 }
