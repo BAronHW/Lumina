@@ -5,8 +5,6 @@ import cats.effect.Concurrent
 import cats.syntax.all.*
 import skunk.data.Completion
 
-import java.util.UUID
-
 trait TraceAssemblyService[F[_]] {
   def processSpans(spans: List[Span], chunksToTake: Int): F[Boolean]
   def flush: F[Boolean]
