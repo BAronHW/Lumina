@@ -26,6 +26,17 @@ object TraceRoutes {
       totalCostUsd: Option[BigDecimal],
       tags: Map[String, String]
   )
+
+  private case class EditTraceRequest(
+      id: UUID,
+      agentId: UUID,
+      name: String,
+      status: SpanStatus,
+      startedAt: OffsetDateTime,
+      endedAt: Option[OffsetDateTime],
+      totalCostUsd: Option[BigDecimal],
+      tags: Map[String, String]
+  )
   def traceRoutes[F[_]: Concurrent](traceService: TraceService[F]): HttpRoutes[F] = {
     val dsl = new Http4sDsl[F] {}
     import dsl.*
@@ -85,8 +96,20 @@ object TraceRoutes {
           res <- traceService.batchCreateTrace(createTraceRequestToTrace(body))
           resp <- Created(res.toString)
         } yield resp
+
+      case req @ PUT -> Root / "traces" / "batch" =>
+        for {
+          body <- req.as[List[EditTraceRequest]]
+          res <- traceService.batchUpdateTraces(editTraceRequestToTrace(body))
+          resp <- Ok(res.toString)
+        } yield resp
     }
   }
+
+  private def editTraceRequestToTrace(editTraceRequests: List[EditTraceRequest]): List[Trace] =
+    editTraceRequests.map { t =>
+      Trace(t.id, t.agentId, t.name, t.status, t.startedAt, t.endedAt, t.totalCostUsd, t.tags)
+    }
 
   private def createTraceRequestToTrace(createTraceRequests: List[CreateTraceRequest]): List[Trace] = {
     createTraceRequests.map { trace =>
