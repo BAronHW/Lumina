@@ -6,9 +6,9 @@ import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 import java.util.UUID
 
 case class Prompt(
-    Id: UUID,
-    Name: String,
-    Prompt: String
+    id: UUID,
+    name: String,
+    content: String
 )
 
 object Prompt {
