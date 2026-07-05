@@ -39,22 +39,6 @@ object Span:
   given Encoder[Span] = deriveEncoder[Span]
   given Decoder[Span] = deriveDecoder[Span]
 
-case class Trace(
-    traceId: UUID,
-    name: String,
-    agentId: UUID,
-    status: SpanStatus,
-    startedAt: OffsetDateTime,
-    endedAt: Option[OffsetDateTime],
-    totalCostUsd: Option[BigDecimal],
-    tags: Map[String, String],
-    spans: List[Span]
-)
-
-object Trace:
-  given Encoder[Trace] = deriveEncoder[Trace]
-  given Decoder[Trace] = deriveDecoder[Trace]
-
 case class CreateSpanRequest(
     spans: List[Span]
 )

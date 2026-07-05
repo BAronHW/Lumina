@@ -1,7 +1,6 @@
 package com.example.lumina.services
 
 import Domain.Prompt
-import cats.effect.Concurrent
 import com.example.lumina.repository.PromptRepository
 import skunk.data.Completion
 
@@ -15,7 +14,7 @@ trait PromptService[F[_]] {
 }
 
 object PromptService {
-  def impl[F[_]: Concurrent](promptRepository: PromptRepository[F]): PromptService[F] = new PromptService[F] {
+  def impl[F[_]](promptRepository: PromptRepository[F]): PromptService[F] = new PromptService[F] {
     override def getPrompt(id: UUID): F[Option[Prompt]] = {
       promptRepository.selectPromptWithId(id)
     }
