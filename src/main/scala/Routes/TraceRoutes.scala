@@ -2,7 +2,7 @@ package Routes
 
 import Domain.Trace
 import Domain.Trace.given
-import cats.effect.{Concurrent}
+import cats.effect.Concurrent
 import cats.syntax.all.*
 import com.example.lumina.services.TraceService
 import com.example.lumina.types.SpanStatus
@@ -78,6 +78,28 @@ object TraceRoutes {
           )
           resp <- Ok(res.toString)
         } yield resp
+
+      case req @ POST -> Root / "traces" / "batch" =>
+        for {
+          body <- req.as[List[CreateTraceRequest]]
+          res <- traceService.batchCreateTrace(createTraceRequestToTrace(body))
+          resp <- Created(res.toString)
+        } yield resp
+    }
+  }
+
+  private def createTraceRequestToTrace(createTraceRequests: List[CreateTraceRequest]): List[Trace] = {
+    createTraceRequests.map { trace =>
+      Trace(
+        id = UUID.randomUUID(),
+        agentId = trace.agentId,
+        name = trace.name,
+        status = trace.status,
+        startedAt = trace.startedAt,
+        endedAt = trace.endedAt,
+        totalCostUsd = trace.totalCostUsd,
+        tags = trace.tags
+      )
     }
   }
 }
