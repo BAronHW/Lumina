@@ -7,7 +7,7 @@ import org.typelevel.log4cats.Logger
 import skunk.data.Completion
 
 trait TraceAssemblyService[F[_]] {
-  def processSpans(spans: List[Span], chunksToTake: Int): F[Boolean]
+  def processSpans(chunksToTake: Int): F[Boolean]
   def flush: F[Boolean]
 }
 
