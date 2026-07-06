@@ -1,7 +1,10 @@
 package com.example.lumina.services
 
 import Domain.Trace
+import cats.Monad
+import cats.syntax.all.*
 import com.example.lumina.repository.TraceRepository
+import org.typelevel.log4cats.Logger
 import skunk.data.Completion
 
 import java.util.UUID
@@ -17,33 +20,27 @@ trait TraceService[F[_]] {
 }
 
 object TraceService {
-  def impl[F[_]](traceRepository: TraceRepository[F]): TraceService[F] = new TraceService[F] {
-    override def createTrace(traceBody: Trace): F[Completion] = {
-      traceRepository.createTrace(traceBody)
-    }
+  def impl[F[_]: Monad](traceRepository: TraceRepository[F], logger: Logger[F]): TraceService[F] =
+    new TraceService[F] {
+      override def createTrace(traceBody: Trace): F[Completion] =
+        logger.info(s"Creating trace: ${traceBody.id}") *> traceRepository.createTrace(traceBody)
 
-    override def deleteTrace(traceId: UUID): F[Completion] = {
-      traceRepository.deleteTrace(traceId)
-    }
+      override def deleteTrace(traceId: UUID): F[Completion] =
+        logger.info(s"Deleting trace: $traceId") *> traceRepository.deleteTrace(traceId)
 
-    override def selectTrace(traceId: UUID): F[Option[Trace]] = {
-      traceRepository.getTraceById(traceId)
-    }
+      override def selectTrace(traceId: UUID): F[Option[Trace]] =
+        logger.info(s"Getting trace: $traceId") *> traceRepository.getTraceById(traceId)
 
-    override def updateTrace(traceBody: Trace): F[Completion] = {
-      traceRepository.updateTrace(traceBody)
-    }
+      override def updateTrace(traceBody: Trace): F[Completion] =
+        logger.info(s"Updating trace: ${traceBody.id}") *> traceRepository.updateTrace(traceBody)
 
-    override def batchCreateTrace(traceBodyBatch: List[Trace]): F[Completion] = {
-      traceRepository.batchCreateTraces(traceBodyBatch)
-    }
+      override def batchCreateTrace(traceBodyBatch: List[Trace]): F[Completion] =
+        logger.info(s"Batch creating ${traceBodyBatch.size} traces") *> traceRepository.batchCreateTraces(traceBodyBatch)
 
-    override def batchUpdateTraces(traces: List[Trace]): F[Completion] = {
-      traceRepository.batchUpdateTraces(traces)
-    }
+      override def batchUpdateTraces(traces: List[Trace]): F[Completion] =
+        logger.info(s"Batch updating ${traces.size} traces") *> traceRepository.batchUpdateTraces(traces)
 
-    override def updateBatchTracesWithId(traceIds: List[UUID]): F[Completion] = {
-      traceRepository.updateTraceBatchWithIds(traceIds)
+      override def updateBatchTracesWithId(traceIds: List[UUID]): F[Completion] =
+        logger.info(s"Batch updating ${traceIds.size} traces by id") *> traceRepository.updateTraceBatchWithIds(traceIds)
     }
-  }
 }
