@@ -27,9 +27,10 @@ object TraceAssemblyService {
       for {
         items <- ingestBuffer.tryTakeN(chunksToTake)
         _ <- logger.info(s"Processing ${items.size} spans from queue")
-        _ <- spanService.createBatchSpan(items)
-        traceCompletion <- updateCompletedTrace(items)
-      } yield traceCompletion
+        result <-
+          if (items.isEmpty) Concurrent[F].pure(false)
+          else spanService.createBatchSpan(items) *> updateCompletedTrace(items)
+      } yield result
 
     /** This function flushes the ingest buffer so that all spans that were in the buffer will now be removed. The
       * function will return true if the buffer is flushed and will return false if it cannot be flushed or if the

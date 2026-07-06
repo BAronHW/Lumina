@@ -3,14 +3,23 @@ import Domain.Span
 import Routes.{ClientRoutes, IngestRoutes, PromptRoutes, TraceRoutes}
 import cats.syntax.semigroupk.*
 import cats.effect.{Async, Resource}
+import cats.effect.syntax.all.*
 import cats.effect.std.{Console, Queue}
 import com.comcast.ip4s.*
 import com.example.lumina.DB.DataBaseConnection
-import com.example.lumina.repository.{ClientRepository, PromptRepository, TraceRepository}
-import com.example.lumina.services.{ClientService, IngestBuffer, IngestService, PromptService, TraceService}
-import com.example.lumina.types.Config
+import com.example.lumina.repository.{ClientRepository, PromptRepository, SpanRepository, TraceRepository}
+import com.example.lumina.services.{
+  ClientService,
+  IngestBuffer,
+  IngestService,
+  PromptService,
+  SpanQueueWorker,
+  SpanService,
+  TraceAssemblyService,
+  TraceService
+}
+import com.example.lumina.types.{Config, WorkerConfig}
 import fs2.io.net.Network
-import org.http4s.ember.client.EmberClientBuilder
 import org.http4s.ember.server.EmberServerBuilder
 import org.http4s.implicits.*
 import org.http4s.server.middleware.Logger
@@ -29,6 +38,15 @@ object LuminaServer:
           ConfigSource.default.at("db").load[Config].left.map(e => new RuntimeException(e.prettyPrint()))
         )
       )
+      workerConf <- Resource.eval(
+        Async[F].fromEither(
+          ConfigSource.default
+            .at("lumina.worker")
+            .load[WorkerConfig]
+            .left
+            .map(e => new RuntimeException(e.prettyPrint()))
+        )
+      )
       pooled <- DataBaseConnection.pooled(conf)
       queue <- Resource.eval(Queue.bounded[F, Span](256))
       logger = LoggerFactory[F].getLogger
@@ -36,11 +54,20 @@ object LuminaServer:
       clientRepository = new ClientRepository(pooled)
       promptRepository = new PromptRepository[F](pooled)
       traceRepository = new TraceRepository[F](pooled)
+      spanRepository = new SpanRepository[F](pooled)
+      spanService = SpanService.impl[F](spanRepository, logger)
+      traceService = TraceService.impl[F](traceRepository, logger)
+      traceAssemblyService = TraceAssemblyService.impl[F](
+        ingestBuffer = ingestBuffer,
+        spanService = spanService,
+        traceService = traceService,
+        logger = logger
+      )
       clientService = ClientService.impl[F](clientRepository, logger)
-      ingestService = IngestService.impl[F](ingestBuffer)
-      promptService = PromptService.impl[F](promptRepository)
-      traceService = TraceService.impl[F](traceRepository)
-      client <- EmberClientBuilder.default[F].build
+      ingestService = IngestService.impl[F](ingestBuffer, logger)
+      promptService = PromptService.impl[F](promptRepository, logger)
+      spanQueueWorker = SpanQueueWorker.impl[F](traceAssemblyService, workerConf)
+      _ <- spanQueueWorker.stream.compile.drain.background
 
       httpApp = (
         ClientRoutes.clientRoutes[F](clientService) <+>
