@@ -6,7 +6,7 @@ import com.example.lumina.types.Config
 import fs2.io.net.Network
 import org.typelevel.otel4s.trace.Tracer
 import org.typelevel.otel4s.metrics.Meter
-import skunk.Session
+import skunk.{Session, TypingStrategy}
 
 object DataBaseConnection {
 
@@ -17,5 +17,6 @@ object DataBaseConnection {
       .withPort(config.port)
       .withUserAndPassword(config.username, config.password)
       .withDatabase(config.database)
+      .withTypingStrategy(TypingStrategy.SearchPath)
       .pooled(max = 10)
 }

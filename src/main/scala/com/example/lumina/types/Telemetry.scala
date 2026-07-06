@@ -29,10 +29,12 @@ enum SpanStatus:
 
 object SpanStatus:
   given Encoder[SpanStatus] = Encoder[String].contramap(_.toString.toLowerCase)
-  given Decoder[SpanStatus] = Decoder[String].emap {
-    case "ok"    => Right(SpanStatus.Ok)
-    case "error" => Right(SpanStatus.Error)
-    case other   => Left(s"Invalid SpanStatus: $other")
+  given Decoder[SpanStatus] = Decoder[String].emap { s =>
+    s.toLowerCase match {
+      case "ok"    => Right(SpanStatus.Ok)
+      case "error" => Right(SpanStatus.Error)
+      case other   => Left(s"Invalid SpanStatus: $other")
+    }
   }
 
 object Span:

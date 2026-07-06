@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS agent (
     UNIQUE(client_id, name)
 );
 
-CREATE TYPE span_status AS ENUM ('Ok', 'Error');
+CREATE TYPE span_status AS ENUM ('ok', 'error');
 
 CREATE TABLE IF NOT EXISTS trace (
   id             UUID PRIMARY KEY,
