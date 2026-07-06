@@ -118,8 +118,7 @@ class TraceRepository[F[_]: Concurrent](session: Resource[F, Session[F]]) {
       sql"""UPDATE trace
                 SET ended_at = NOW(),
                     status = 'ok'::span_status
-                FROM (VALUES $enc) AS v(id)
-               WHERE trace.id = v.id::uuid""".command
+               WHERE trace.id IN ($enc)""".command
     }
   }
 }

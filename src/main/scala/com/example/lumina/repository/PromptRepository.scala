@@ -51,7 +51,7 @@ class PromptRepository[F[_]: Concurrent](session: Resource[F, Session[F]]) {
 
     val updatePrompt: Command[Prompt] =
       sql"UPDATE prompt SET name = $varchar, content = $varchar WHERE id = $uuid".command.contramap[Prompt] { p =>
-        p.name *: p.content *: p.id *: EmptyTuple
+        p.name *: p.prompt *: p.id *: EmptyTuple
       }
   }
 }

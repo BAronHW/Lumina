@@ -6,6 +6,7 @@ import cats.effect.Concurrent
 import cats.syntax.all.*
 import com.example.lumina.services.TraceService
 import com.example.lumina.types.SpanStatus
+import com.example.lumina.types.given
 import io.circe.generic.auto.*
 import org.http4s.HttpRoutes
 import org.http4s.circe.*

@@ -1,13 +1,19 @@
 package com.example.lumina
 import Domain.Span
-import Routes.{AgentRoutes, ClientRoutes, IngestRoutes, PromptRoutes, TraceRoutes}
+import Routes.{AgentRoutes, ClientRoutes, IngestRoutes, PromptRoutes, SpanRoutes, TraceRoutes}
 import cats.syntax.semigroupk.*
 import cats.effect.{Async, Resource}
 import cats.effect.syntax.all.*
 import cats.effect.std.{Console, Queue}
 import com.comcast.ip4s.*
 import com.example.lumina.DB.DataBaseConnection
-import com.example.lumina.repository.{AgentRepository, ClientRepository, PromptRepository, SpanRepository, TraceRepository}
+import com.example.lumina.repository.{
+  AgentRepository,
+  ClientRepository,
+  PromptRepository,
+  SpanRepository,
+  TraceRepository
+}
 import com.example.lumina.services.{
   AgentService,
   ClientService,
@@ -64,11 +70,11 @@ object LuminaServer:
         traceService = traceService,
         logger = logger
       )
-      agentRepository  = new AgentRepository[F](pooled)
-      agentService     = AgentService.impl[F](agentRepository, logger)
-      clientService    = ClientService.impl[F](clientRepository, logger)
-      ingestService    = IngestService.impl[F](ingestBuffer, logger)
-      promptService    = PromptService.impl[F](promptRepository, logger)
+      agentRepository = new AgentRepository[F](pooled)
+      agentService = AgentService.impl[F](agentRepository, logger)
+      clientService = ClientService.impl[F](clientRepository, logger)
+      ingestService = IngestService.impl[F](ingestBuffer, logger)
+      promptService = PromptService.impl[F](promptRepository, logger)
       spanQueueWorker = SpanQueueWorker.impl[F](traceAssemblyService, workerConf)
       _ <- spanQueueWorker.stream.compile.drain.background
 
@@ -77,7 +83,8 @@ object LuminaServer:
           ClientRoutes.clientRoutes[F](clientService) <+>
           IngestRoutes.ingestRoutes[F](ingestService) <+>
           PromptRoutes.promptRoutes[F](promptService) <+>
-          TraceRoutes.traceRoutes[F](traceService)
+          TraceRoutes.traceRoutes[F](traceService) <+>
+          SpanRoutes.spanRoutes[F](spanService)
       ).orNotFound
 
       finalHttpApp = Logger.httpApp(true, true)(httpApp)

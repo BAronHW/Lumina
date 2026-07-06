@@ -8,7 +8,7 @@ import java.util.UUID
 case class Prompt(
     id: UUID,
     name: String,
-    content: String
+    prompt: String
 )
 
 object Prompt {
