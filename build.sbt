@@ -22,6 +22,7 @@ libraryDependencies ++= Seq(
   "io.circe" %% "circe-core" % circeVersion,
   "io.circe" %% "circe-generic" % circeVersion,
   "org.typelevel" %% "log4cats-slf4j" % "2.8.0",
+  "org.typelevel" %% "log4cats-core" % "2.8.0",
   "io.circe" %% "circe-parser" % circeVersion,
   "org.tpolecat" %% "skunk-core" % skunkVersion,
   "org.tpolecat" %% "skunk-circe" % skunkVersion,
