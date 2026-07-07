@@ -1,6 +1,6 @@
 package com.example.lumina.services
 
-import Domain.Span
+import Domain.{Pagination, Span}
 import cats.Monad
 import cats.syntax.all.*
 import com.example.lumina.repository.SpanRepository
@@ -14,6 +14,7 @@ trait SpanService[F[_]] {
   def createBatchSpan(spanList: List[Span]): F[Completion]
   def updateSpan(span: Span): F[Completion]
   def deleteSpanById(spanId: UUID): F[Completion]
+  def getAllSpan(pagination: Pagination): F[List[Span]]
 }
 
 /** This is the service in charge of creating all the spans in this system it should create all spans in buffers and
@@ -38,5 +39,9 @@ object SpanService {
 
       override def deleteSpanById(spanId: UUID): F[Completion] =
         logger.info(s"Deleting span: $spanId") *> spanRepository.deleteSpanById(spanId)
+
+      override def getAllSpan(pagination: Pagination): F[List[Span]] = {
+        logger.info(s"Get All span") *> spanRepository.getAllSpans(pagination)
+      }
     }
 }
