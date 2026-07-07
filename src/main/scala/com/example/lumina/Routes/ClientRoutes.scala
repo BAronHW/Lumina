@@ -29,9 +29,9 @@ object ClientRoutes:
 
       case req @ POST -> Root / "clients" =>
         for {
-          body <- req.as[CreateClientRequest]
-          result <- service.registerClient(body.name)
-          resp <- Created(result.toString)
+          body   <- req.as[CreateClientRequest]
+          client <- service.registerClient(body.name)
+          resp   <- Created(client)
         } yield resp
 
       case req @ PUT -> Root / "clients" / UUIDVar(id) =>

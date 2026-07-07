@@ -10,7 +10,7 @@ import skunk.data.Completion
 import java.util.UUID
 
 trait ClientService[F[_]] {
-  def registerClient(name: String): F[Completion]
+  def registerClient(name: String): F[Client]
   def getClientById(clientId: UUID): F[Option[Client]]
   def updateClientById(clientId: UUID, newName: String): F[Completion]
   def removeClientById(clientId: UUID): F[Completion]
@@ -20,7 +20,7 @@ trait ClientService[F[_]] {
 object ClientService {
   def impl[F[_]: Monad](clientRepository: ClientRepository[F], logger: Logger[F]): ClientService[F] =
     new ClientService[F] {
-      override def registerClient(clientName: String): F[Completion] = {
+      override def registerClient(clientName: String): F[Client] = {
         val newClient = Client(java.util.UUID.randomUUID(), clientName)
         logger.info("Creating client") *> clientRepository.createClient(newClient)
       }

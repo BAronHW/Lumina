@@ -11,9 +11,9 @@ import skunk.data.Completion
 import java.util.UUID
 
 class ClientRepository[F[_]: Concurrent](session: Resource[F, Session[F]]) {
-  def createClient(client: Client): F[Completion] = {
+  def createClient(client: Client): F[Client] = {
     session.use { s =>
-      s.prepare(ClientRepositoryQueries.insertClient).flatMap(ps => ps.execute(client))
+      s.prepare(ClientRepositoryQueries.insertClient).flatMap(ps => ps.unique(client))
     }
   }
 
@@ -52,8 +52,8 @@ class ClientRepository[F[_]: Concurrent](session: Resource[F, Session[F]]) {
     private val clientCodec: Codec[Client] = (uuid *: varchar).to[Client]
     private val clientValues = (uuid *: varchar).values.to[Client]
 
-    val insertClient: Command[Client] =
-      sql"INSERT INTO client (id, name) VALUES $clientValues".command
+    val insertClient: Query[Client, Client] =
+      sql"INSERT INTO client (id, name) VALUES $clientValues RETURNING id, name".query(clientCodec)
 
     val selectClient: Query[UUID, Client] =
       sql"SELECT id, name FROM client WHERE id = $uuid".query(clientCodec)
