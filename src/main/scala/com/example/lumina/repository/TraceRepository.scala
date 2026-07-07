@@ -71,7 +71,7 @@ class TraceRepository[F[_]: Concurrent](session: Resource[F, Session[F]]) {
       jsonb.imap(_.as[Map[String, String]].getOrElse(Map.empty))(tags => CEncoder[Map[String, String]].apply(tags))
 
     private val traceCodec: Codec[Trace] =
-      (uuid *: uuid *: varchar *: spanStatusCodec *:
+      (uuid *: uuid *: uuid.opt *: varchar *: spanStatusCodec *:
         timestamptz *: timestamptz.opt *: numeric.opt *: tagsCodec).to[Trace]
 
     val createTrace: Command[Trace] =
@@ -90,11 +90,11 @@ class TraceRepository[F[_]: Concurrent](session: Resource[F, Session[F]]) {
 
     val updateTrace: Command[Trace] =
       sql"""UPDATE trace SET
-              agent_id = $uuid, name = $varchar, status = $spanStatusCodec,
+              agent_id = $uuid, session_id = ${uuid.opt}, name = $varchar, status = $spanStatusCodec,
               started_at = $timestamptz, ended_at = ${timestamptz.opt},
               total_cost_usd = ${numeric.opt}, tags = $tagsCodec
             WHERE id = $uuid""".command.contramap[Trace] { t =>
-        t.agentId *: t.name *: t.status *: t.startedAt *: t.endedAt *: t.totalCostUsd *: t.tags *: t.id *: EmptyTuple
+        t.agentId *: t.sessionId *: t.name *: t.status *: t.startedAt *: t.endedAt *: t.totalCostUsd *: t.tags *: t.id *: EmptyTuple
       }
 
     def batchCreateTrace(traceList: List[Trace]): Command[traceList.type] = {

@@ -12,9 +12,18 @@ CREATE TABLE IF NOT EXISTS agent (
 
 CREATE TYPE span_status AS ENUM ('ok', 'error');
 
+CREATE TABLE IF NOT EXISTS session (
+    id         UUID PRIMARY KEY,
+    agent_id   UUID NOT NULL REFERENCES agent(id),
+    name       VARCHAR NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    ended_at   TIMESTAMPTZ
+);
+
 CREATE TABLE IF NOT EXISTS trace (
   id             UUID PRIMARY KEY,
   agent_id       UUID NOT NULL REFERENCES agent(id),
+  session_id     UUID REFERENCES session(id),
   name           VARCHAR NOT NULL,
   status         span_status NOT NULL,
   started_at     TIMESTAMPTZ NOT NULL,

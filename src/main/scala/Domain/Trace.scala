@@ -11,6 +11,7 @@ import java.util.UUID
 case class Trace(
     id: UUID,
     agentId: UUID,
+    sessionId: Option[UUID],
     name: String,
     status: SpanStatus,
     startedAt: OffsetDateTime,

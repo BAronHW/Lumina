@@ -1,6 +1,6 @@
 package Routes
 
-import Domain.Trace
+import Domain.{Pagination, Trace}
 import Domain.Trace.given
 import cats.effect.Concurrent
 import cats.syntax.all.*
@@ -20,6 +20,7 @@ import java.util.UUID
 object TraceRoutes {
   private case class CreateTraceRequest(
       agentId: UUID,
+      sessionId: Option[UUID],
       name: String,
       status: SpanStatus,
       startedAt: OffsetDateTime,
@@ -31,6 +32,7 @@ object TraceRoutes {
   private case class EditTraceRequest(
       id: UUID,
       agentId: UUID,
+      sessionId: Option[UUID],
       name: String,
       status: SpanStatus,
       startedAt: OffsetDateTime,
@@ -41,6 +43,8 @@ object TraceRoutes {
   def traceRoutes[F[_]: Concurrent](traceService: TraceService[F]): HttpRoutes[F] = {
     val dsl = new Http4sDsl[F] {}
     import dsl.*
+    object PageMatcher extends QueryParamDecoderMatcher[Int]("page")
+    object PageSizeMatcher extends OptionalQueryParamDecoderMatcher[Int]("pageSize")
 
     HttpRoutes.of[F] {
       case GET -> Root / "traces" / UUIDVar(traceId) =>
@@ -56,6 +60,7 @@ object TraceRoutes {
             Trace(
               UUID.randomUUID(),
               body.agentId,
+              body.sessionId,
               body.name,
               body.status,
               body.startedAt,
@@ -80,6 +85,7 @@ object TraceRoutes {
             Trace(
               traceId,
               body.agentId,
+              body.sessionId,
               body.name,
               body.status,
               body.startedAt,
@@ -104,12 +110,15 @@ object TraceRoutes {
           res <- traceService.batchUpdateTraces(editTraceRequestToTrace(body))
           resp <- Ok(res.toString)
         } yield resp
+
+      case GET -> Root / "traces" :? PageMatcher(page) +& PageSizeMatcher(pageSize) =>
+        traceService.getAllTraces(Pagination(page, pageSize.getOrElse(20))).flatMap(traces => Ok(traces))
     }
   }
 
   private def editTraceRequestToTrace(editTraceRequests: List[EditTraceRequest]): List[Trace] =
     editTraceRequests.map { t =>
-      Trace(t.id, t.agentId, t.name, t.status, t.startedAt, t.endedAt, t.totalCostUsd, t.tags)
+      Trace(t.id, t.agentId, t.sessionId, t.name, t.status, t.startedAt, t.endedAt, t.totalCostUsd, t.tags)
     }
 
   private def createTraceRequestToTrace(createTraceRequests: List[CreateTraceRequest]): List[Trace] = {
@@ -117,6 +126,7 @@ object TraceRoutes {
       Trace(
         id = UUID.randomUUID(),
         agentId = trace.agentId,
+        sessionId = trace.sessionId,
         name = trace.name,
         status = trace.status,
         startedAt = trace.startedAt,
