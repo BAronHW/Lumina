@@ -1,8 +1,8 @@
 package com.example.lumina.services
 
-import Domain.Span
 import cats.Monad
 import cats.syntax.all.*
+import com.example.lumina.Domain.Span
 import org.typelevel.log4cats.Logger
 
 trait IngestService[F[_]] {

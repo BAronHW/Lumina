@@ -1,8 +1,8 @@
-package Routes
+package com.example.lumina.Routes
 
-import Domain.Session
 import cats.effect.Concurrent
 import cats.syntax.all.*
+import com.example.lumina.Domain.Session
 import com.example.lumina.services.SessionService
 import io.circe.generic.auto.*
 import org.http4s.HttpRoutes

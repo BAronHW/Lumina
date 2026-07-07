@@ -1,13 +1,13 @@
-package Routes
+package com.example.lumina.Routes
 
-import Domain.Pagination
 import cats.effect.Concurrent
 import com.example.lumina.services.SpanService
 import org.http4s.HttpRoutes
 import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.dsl.Http4sDsl
 import cats.syntax.all.*
-import Domain.Span.given
+import com.example.lumina.Domain.Pagination
+import com.example.lumina.Domain.Span.given
 
 object SpanRoutes {
   def spanRoutes[F[_]: Concurrent](spanService: SpanService[F]): HttpRoutes[F] = {

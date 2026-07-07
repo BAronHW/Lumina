@@ -1,8 +1,8 @@
 package com.example.lumina.services
 
-import Domain.{Pagination, Span}
 import cats.Monad
 import cats.syntax.all.*
+import com.example.lumina.Domain.{Pagination, Span}
 import com.example.lumina.repository.SpanRepository
 import org.typelevel.log4cats.Logger
 import skunk.data.Completion

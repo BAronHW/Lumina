@@ -1,7 +1,6 @@
 package com.example.lumina.types
 
-import Domain.Span
-
+import com.example.lumina.Domain.Span
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 import java.util.UUID

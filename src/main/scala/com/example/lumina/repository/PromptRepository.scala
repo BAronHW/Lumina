@@ -1,6 +1,5 @@
 package com.example.lumina.repository
 
-import Domain.Prompt
 import cats.effect.Concurrent
 import cats.effect.kernel.Resource
 import skunk.*
@@ -8,6 +7,7 @@ import skunk.codec.all.{uuid, varchar}
 import skunk.data.Completion
 import skunk.implicits.sql
 import cats.syntax.all.*
+import com.example.lumina.Domain.Prompt
 
 import java.util.UUID
 

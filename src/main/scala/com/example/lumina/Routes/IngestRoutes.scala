@@ -1,4 +1,4 @@
-package Routes
+package com.example.lumina.Routes
 
 import cats.effect.Concurrent
 import cats.syntax.all.*

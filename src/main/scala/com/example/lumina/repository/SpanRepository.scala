@@ -1,8 +1,8 @@
 package com.example.lumina.repository
 
-import Domain.{Pagination, Span}
 import cats.effect.{Concurrent, Resource}
 import cats.syntax.all.*
+import com.example.lumina.Domain.{Pagination, Span}
 import com.example.lumina.types.{SpanKind, SpanStatus}
 import skunk.*
 import skunk.circe.codec.all.jsonb

@@ -1,10 +1,10 @@
 package com.example.lumina.repository
 
-import Domain.{Pagination, Trace}
 import cats.effect.Concurrent
 import cats.effect.kernel.Resource
 import com.example.lumina.types.SpanStatus
 import cats.syntax.all.*
+import com.example.lumina.Domain.{Pagination, Trace}
 import io.circe.{Decoder as CDecoder, Encoder as CEncoder}
 import skunk.*
 import skunk.circe.codec.all.jsonb

@@ -1,8 +1,8 @@
 package com.example.lumina.repository
 
-import Domain.Agent
 import cats.effect.{Concurrent, Resource}
 import cats.syntax.all.*
+import com.example.lumina.Domain.Agent
 import skunk.*
 import skunk.implicits.*
 import skunk.codec.all.*

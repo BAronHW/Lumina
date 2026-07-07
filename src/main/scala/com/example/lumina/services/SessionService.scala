@@ -1,8 +1,8 @@
 package com.example.lumina.services
 
-import Domain.Session
 import cats.Monad
 import cats.syntax.all.*
+import com.example.lumina.Domain.Session
 import com.example.lumina.repository.SessionRepository
 import org.typelevel.log4cats.Logger
 import skunk.data.Completion

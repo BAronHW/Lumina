@@ -1,11 +1,11 @@
 package com.example.lumina.repository
 
-import Domain.Client
 import cats.effect.{Concurrent, Resource}
 import skunk.*
 import skunk.implicits.*
 import skunk.codec.all.*
 import cats.syntax.all.*
+import com.example.lumina.Domain.Client
 import skunk.data.Completion
 
 import java.util.UUID

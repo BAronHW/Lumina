@@ -1,9 +1,9 @@
-package Routes
+package com.example.lumina.Routes
 
-import Domain.{Pagination, Trace}
-import Domain.Trace.given
+import com.example.lumina.Domain.Trace.given
 import cats.effect.Concurrent
 import cats.syntax.all.*
+import com.example.lumina.Domain.{Pagination, Trace}
 import com.example.lumina.services.TraceService
 import com.example.lumina.types.SpanStatus
 import com.example.lumina.types.given

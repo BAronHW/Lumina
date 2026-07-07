@@ -1,9 +1,9 @@
-package Routes
+package com.example.lumina.Routes
 
-import Domain.Agent
-import Domain.Agent.given
+import com.example.lumina.Domain.Agent.given
 import cats.effect.Concurrent
 import cats.syntax.all.*
+import com.example.lumina.Domain.Agent
 import com.example.lumina.services.AgentService
 import io.circe.generic.auto.*
 import org.http4s.HttpRoutes

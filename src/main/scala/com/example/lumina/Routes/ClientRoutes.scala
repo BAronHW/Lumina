@@ -1,9 +1,9 @@
-package Routes
+package com.example.lumina.Routes
 
-import Domain.Client
-import Domain.Client.given
+import com.example.lumina.Domain.Client.given
 import cats.effect.Concurrent
 import cats.syntax.all.*
+import com.example.lumina.Domain.Client
 import com.example.lumina.services.ClientService
 import io.circe.{Decoder, Encoder}
 import org.http4s.HttpRoutes

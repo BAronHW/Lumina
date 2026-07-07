@@ -1,8 +1,8 @@
 package com.example.lumina.services
 
-import Domain.Prompt
 import cats.Monad
 import cats.syntax.all.*
+import com.example.lumina.Domain.Prompt
 import com.example.lumina.repository.PromptRepository
 import org.typelevel.log4cats.Logger
 import skunk.data.Completion

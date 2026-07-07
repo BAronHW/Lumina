@@ -1,4 +1,4 @@
-package Domain
+package com.example.lumina.Domain
 
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 import io.circe.{Decoder, Encoder}

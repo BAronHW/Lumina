@@ -1,4 +1,4 @@
-package Domain
+package com.example.lumina.Domain
 
 import com.example.lumina.types.SpanStatus
 import com.example.lumina.types.given
