@@ -58,6 +58,13 @@ class TraceRepository[F[_]: Concurrent](session: Resource[F, Session[F]]) {
     }
   }
 
+  def getTracesByAgentId(agentId: UUID): F[List[Trace]] = {
+    session.use { s =>
+      s.prepare(TraceRepositoryQueries.selectTracesByAgentId)
+        .flatMap(ps => ps.stream(agentId, 64).compile.toList)
+    }
+  }
+
   private object TraceRepositoryQueries {
 
     private val spanStatusCodec: Codec[SpanStatus] =
@@ -120,5 +127,8 @@ class TraceRepository[F[_]: Concurrent](session: Resource[F, Session[F]]) {
                     status = 'ok'::span_status
                WHERE trace.id IN ($enc)""".command
     }
+
+    val selectTracesByAgentId: Query[UUID, Trace] =
+      sql"""SELECT * FROM trace WHERE agent_id = $uuid""".query(traceCodec)
   }
 }

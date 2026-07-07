@@ -18,6 +18,7 @@ trait TraceService[F[_]] {
   def batchUpdateTraces(traces: List[Trace]): F[Completion]
   def updateBatchTracesWithId(traceIds: List[UUID]): F[Completion]
   def getAllTraces(pagination: Pagination): F[List[Trace]]
+  def getTracesByAgentId(agentId: UUID): F[List[Trace]]
 }
 
 object TraceService {
@@ -51,5 +52,8 @@ object TraceService {
       override def getAllTraces(pagination: Pagination): F[List[Trace]] =
         logger.info(s"Getting all traces with pagination") *> traceRepository.getAllTraces(pagination)
 
+      override def getTracesByAgentId(agentId: UUID): F[List[Trace]] =
+        logger.info(s"Getting all traces belonging to agent with id of ${agentId}") *> traceRepository
+          .getTracesByAgentId(agentId)
     }
 }

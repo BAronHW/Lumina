@@ -113,6 +113,9 @@ object TraceRoutes {
 
       case GET -> Root / "traces" :? PageMatcher(page) +& PageSizeMatcher(pageSize) =>
         traceService.getAllTraces(Pagination(page, pageSize.getOrElse(20))).flatMap(traces => Ok(traces))
+
+      case GET -> Root / "agents" / UUIDVar(agentId) / "traces" =>
+        traceService.getTracesByAgentId(agentId).flatMap(traces => Ok(traces))
     }
   }
 
