@@ -1,6 +1,6 @@
 package com.example.lumina.services
 
-import Domain.Trace
+import Domain.{Pagination, Trace}
 import cats.Monad
 import cats.syntax.all.*
 import com.example.lumina.repository.TraceRepository
@@ -17,6 +17,7 @@ trait TraceService[F[_]] {
   def batchCreateTrace(traceBody: List[Trace]): F[Completion]
   def batchUpdateTraces(traces: List[Trace]): F[Completion]
   def updateBatchTracesWithId(traceIds: List[UUID]): F[Completion]
+  def getAllTRaces(pagination: Pagination): F[List[Trace]]
 }
 
 object TraceService {
@@ -35,12 +36,18 @@ object TraceService {
         logger.info(s"Updating trace: ${traceBody.id}") *> traceRepository.updateTrace(traceBody)
 
       override def batchCreateTrace(traceBodyBatch: List[Trace]): F[Completion] =
-        logger.info(s"Batch creating ${traceBodyBatch.size} traces") *> traceRepository.batchCreateTraces(traceBodyBatch)
+        logger.info(s"Batch creating ${traceBodyBatch.size} traces") *> traceRepository.batchCreateTraces(
+          traceBodyBatch
+        )
 
       override def batchUpdateTraces(traces: List[Trace]): F[Completion] =
         logger.info(s"Batch updating ${traces.size} traces") *> traceRepository.batchUpdateTraces(traces)
 
       override def updateBatchTracesWithId(traceIds: List[UUID]): F[Completion] =
-        logger.info(s"Batch updating ${traceIds.size} traces by id") *> traceRepository.updateTraceBatchWithIds(traceIds)
+        logger.info(s"Batch updating ${traceIds.size} traces by id") *> traceRepository.updateTraceBatchWithIds(
+          traceIds
+        )
+
+      override def getAllTraces(pagination: Pagination): F[List[Trace]] = ???
     }
 }
