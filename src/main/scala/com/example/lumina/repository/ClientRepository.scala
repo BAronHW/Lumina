@@ -5,7 +5,7 @@ import skunk.*
 import skunk.implicits.*
 import skunk.codec.all.*
 import cats.syntax.all.*
-import com.example.lumina.Domain.Client
+import com.example.lumina.Domain.{Client, Pagination}
 import skunk.data.Completion
 
 import java.util.UUID
@@ -42,9 +42,9 @@ class ClientRepository[F[_]: Concurrent](session: Resource[F, Session[F]]) {
     }
   }
 
-  def getAllClients: F[List[Client]] = {
+  def getAllClients(pagination: Pagination): F[List[Client]] = {
     session.use { s =>
-      s.execute(ClientRepositoryQueries.getAllClient)
+      s.prepare(ClientRepositoryQueries.getAllClient).flatMap(ps => ps.stream(pagination, 64).compile.toList)
     }
   }
 
@@ -64,7 +64,9 @@ class ClientRepository[F[_]: Concurrent](session: Resource[F, Session[F]]) {
     val deleteClient: Command[UUID] =
       sql"DELETE FROM client WHERE id = $uuid".command
 
-    val getAllClient: Query[Void, Client] =
-      sql"SELECT id, name FROM client".query(clientCodec)
+    val getAllClient: Query[Pagination, Client] =
+      sql"SELECT id, name FROM client ORDER BY id DESC LIMIT ${int4} OFFSET ${int4}"
+        .query(clientCodec)
+        .contramap[Pagination](p => p.limit *: p.offset *: EmptyTuple)
   }
 }

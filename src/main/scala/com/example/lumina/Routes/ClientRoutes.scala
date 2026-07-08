@@ -3,7 +3,7 @@ package com.example.lumina.Routes
 import com.example.lumina.Domain.Client.given
 import cats.effect.Concurrent
 import cats.syntax.all.*
-import com.example.lumina.Domain.Client
+import com.example.lumina.Domain.{Client, Pagination}
 import com.example.lumina.services.ClientService
 import io.circe.{Decoder, Encoder}
 import org.http4s.HttpRoutes
@@ -21,6 +21,9 @@ object ClientRoutes:
   def clientRoutes[F[_]: Concurrent](service: ClientService[F]): HttpRoutes[F] =
     val dsl = new Http4sDsl[F] {}
     import dsl.*
+
+    object PageMatcher extends QueryParamDecoderMatcher[Int]("page")
+    object PageSizeMatcher extends OptionalQueryParamDecoderMatcher[Int]("pageSize")
     HttpRoutes.of[F] {
       case GET -> Root / "clients" / UUIDVar(id) =>
         service.getClientById(id).flatMap {
@@ -30,9 +33,9 @@ object ClientRoutes:
 
       case req @ POST -> Root / "clients" =>
         for {
-          body   <- req.as[CreateClientRequest]
+          body <- req.as[CreateClientRequest]
           client <- service.registerClient(body.name)
-          resp   <- Created(client)
+          resp <- Created(client)
         } yield resp
 
       case req @ PUT -> Root / "clients" / UUIDVar(id) =>
@@ -51,9 +54,9 @@ object ClientRoutes:
           case _                             => NotFound()
         }
 
-      case GET -> Root / "clients" =>
+      case GET -> Root / "clients" :? PageMatcher(page) +& PageSizeMatcher(pageSize) =>
         for {
-          result <- service.getAllClient
+          result <- service.getAllClient(Pagination(page, pageSize.getOrElse(20)))
           resp <- Ok(result)
         } yield resp
     }

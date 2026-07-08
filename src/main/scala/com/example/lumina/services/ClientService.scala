@@ -2,7 +2,7 @@ package com.example.lumina.services
 
 import cats.Monad
 import cats.syntax.all.*
-import com.example.lumina.Domain.Client
+import com.example.lumina.Domain.{Client, Pagination}
 import com.example.lumina.repository.ClientRepository
 import org.typelevel.log4cats.Logger
 import skunk.data.Completion
@@ -14,7 +14,7 @@ trait ClientService[F[_]] {
   def getClientById(clientId: UUID): F[Option[Client]]
   def updateClientById(clientId: UUID, newName: String): F[Completion]
   def removeClientById(clientId: UUID): F[Completion]
-  def getAllClient: F[List[Client]]
+  def getAllClient(pagination: Pagination): F[List[Client]]
 }
 
 object ClientService {
@@ -37,8 +37,8 @@ object ClientService {
         logger.info(s"Removing Client with id: $clientId") *> clientRepository.deleteClient(clientId)
       }
 
-      override def getAllClient: F[List[Client]] = {
-        logger.info("Getting all clients") *> clientRepository.getAllClients
+      override def getAllClient(pagination: Pagination): F[List[Client]] = {
+        logger.info("Getting all clients") *> clientRepository.getAllClients(pagination)
       }
     }
 }
