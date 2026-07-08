@@ -10,7 +10,7 @@ import skunk.data.Completion
 import java.util.UUID
 
 trait TraceService[F[_]] {
-  def createTrace(traceBody: Trace): F[Completion]
+  def createTrace(traceBody: Trace): F[Trace]
   def deleteTrace(traceId: UUID): F[Completion]
   def selectTrace(traceId: UUID): F[Option[Trace]]
   def updateTrace(traceBody: Trace): F[Completion]
@@ -24,7 +24,7 @@ trait TraceService[F[_]] {
 object TraceService {
   def impl[F[_]: Monad](traceRepository: TraceRepository[F], logger: Logger[F]): TraceService[F] =
     new TraceService[F] {
-      override def createTrace(traceBody: Trace): F[Completion] =
+      override def createTrace(traceBody: Trace): F[Trace] =
         logger.info(s"Creating trace: ${traceBody.id}") *> traceRepository.createTrace(traceBody)
 
       override def deleteTrace(traceId: UUID): F[Completion] =

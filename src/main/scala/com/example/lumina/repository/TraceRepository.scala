@@ -15,9 +15,9 @@ import skunk.implicits.*
 import java.util.UUID
 
 class TraceRepository[F[_]: Concurrent](session: Resource[F, Session[F]]) {
-  def createTrace(trace: Trace): F[Completion] =
+  def createTrace(trace: Trace): F[Trace] =
     session.use { s =>
-      s.prepare(TraceRepositoryQueries.createTrace).flatMap(ps => ps.execute(trace))
+      s.prepare(TraceRepositoryQueries.createTrace).flatMap(ps => ps.unique(trace))
     }
 
   def getTraceById(traceId: UUID): F[Option[Trace]] =
@@ -81,8 +81,9 @@ class TraceRepository[F[_]: Concurrent](session: Resource[F, Session[F]]) {
       (uuid *: uuid *: uuid.opt *: varchar *: spanStatusCodec *:
         timestamptz *: timestamptz.opt *: numeric.opt *: tagsCodec).to[Trace]
 
-    val createTrace: Command[Trace] =
-      sql"INSERT INTO trace VALUES ${traceCodec.values}".command
+    val createTrace: Query[Trace, Trace] =
+      sql"INSERT INTO trace VALUES ${traceCodec.values} RETURNING id, agent_id, session_id, name, status, started_at, ended_at, total_cost_usd, tags"
+        .query(traceCodec)
 
     val selectTrace: Query[UUID, Trace] =
       sql"SELECT * FROM trace WHERE id = $uuid".query(traceCodec)

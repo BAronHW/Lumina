@@ -7,6 +7,7 @@ import com.example.lumina.Domain.Client
 import com.example.lumina.services.ClientService
 import io.circe.{Decoder, Encoder}
 import org.http4s.HttpRoutes
+import skunk.data.Completion
 import org.http4s.circe.*
 import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.dsl.Http4sDsl
@@ -38,14 +39,17 @@ object ClientRoutes:
         for {
           body <- req.as[UpdateClientRequest]
           result <- service.updateClientById(id, body.name)
-          resp <- Ok(result.toString)
+          resp <- result match {
+            case Completion.Update(n) if n > 0 => Ok()
+            case _                             => NotFound()
+          }
         } yield resp
 
       case DELETE -> Root / "clients" / UUIDVar(id) =>
-        for {
-          result <- service.removeClientById(id)
-          resp <- Ok(result.toString)
-        } yield resp
+        service.removeClientById(id).flatMap {
+          case Completion.Delete(n) if n > 0 => Ok()
+          case _                             => NotFound()
+        }
 
       case GET -> Root / "clients" =>
         for {

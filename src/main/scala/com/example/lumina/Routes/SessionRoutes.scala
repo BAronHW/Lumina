@@ -3,6 +3,7 @@ package com.example.lumina.Routes
 import cats.effect.Concurrent
 import cats.syntax.all.*
 import com.example.lumina.Domain.Session
+import com.example.lumina.Domain.Session.given
 import com.example.lumina.services.SessionService
 import io.circe.generic.auto.*
 import org.http4s.HttpRoutes
@@ -34,11 +35,8 @@ object SessionRoutes:
       case req @ POST -> Root / "sessions" =>
         for {
           body <- req.as[CreateSessionRequest]
-          result <- service.createSession(body.agentId, body.name)
-          resp <- result match {
-            case Completion.Insert(n) if n > 0 => Created()
-            case _                             => InternalServerError()
-          }
+          session <- service.createSession(body.agentId, body.name)
+          resp <- Created(session)
         } yield resp
 
       case PUT -> Root / "sessions" / UUIDVar(id) / "end" =>

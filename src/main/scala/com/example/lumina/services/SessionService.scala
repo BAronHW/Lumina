@@ -11,7 +11,7 @@ import java.time.OffsetDateTime
 import java.util.UUID
 
 trait SessionService[F[_]] {
-  def createSession(agentId: UUID, name: String): F[Completion]
+  def createSession(agentId: UUID, name: String): F[Session]
   def getSessionById(sessionId: UUID): F[Option[Session]]
   def getSessionsByAgentId(agentId: UUID): F[List[Session]]
   def endSession(sessionId: UUID): F[Completion]
@@ -21,7 +21,7 @@ trait SessionService[F[_]] {
 object SessionService {
   def impl[F[_]: Monad](sessionRepository: SessionRepository[F], logger: Logger[F]): SessionService[F] =
     new SessionService[F] {
-      override def createSession(agentId: UUID, name: String): F[Completion] =
+      override def createSession(agentId: UUID, name: String): F[Session] =
         val s = Session(UUID.randomUUID(), agentId, name, OffsetDateTime.now(), None)
         logger.info(s"Creating session '$name' for agent $agentId") *> sessionRepository.createSession(s)
 

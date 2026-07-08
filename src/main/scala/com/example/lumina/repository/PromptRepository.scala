@@ -13,9 +13,9 @@ import java.util.UUID
 
 class PromptRepository[F[_]: Concurrent](session: Resource[F, Session[F]]) {
 
-  def createPrompt(prompt: Prompt): F[Completion] = {
+  def createPrompt(prompt: Prompt): F[Prompt] = {
     session.use { s =>
-      s.prepare(PromptRepositoryQueries.createPrompt).flatMap(ps => ps.execute(prompt))
+      s.prepare(PromptRepositoryQueries.createPrompt).flatMap(ps => ps.unique(prompt))
     }
   }
 
@@ -40,8 +40,9 @@ class PromptRepository[F[_]: Concurrent](session: Resource[F, Session[F]]) {
   private object PromptRepositoryQueries {
     private val promptCodec: Codec[Prompt] = (uuid *: varchar *: varchar).to[Prompt]
 
-    val createPrompt: Command[Prompt] =
-      sql"INSERT INTO prompt (id, name, content) VALUES ${promptCodec.values}".command
+    val createPrompt: Query[Prompt, Prompt] =
+      sql"INSERT INTO prompt (id, name, content) VALUES ${promptCodec.values} RETURNING id, name, content"
+        .query(promptCodec)
 
     val deletePrompt: Command[UUID] =
       sql"DELETE FROM prompt WHERE id = $uuid".command

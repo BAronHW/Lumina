@@ -10,6 +10,7 @@ import org.http4s.HttpRoutes
 import org.http4s.circe.*
 import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.dsl.Http4sDsl
+import skunk.data.Completion
 
 object PromptRoutes {
 
@@ -30,22 +31,25 @@ object PromptRoutes {
       case req @ POST -> Root / "prompt" =>
         for {
           body <- req.as[CreatePromptRequest]
-          result <- promptService.createPrompt(body.name, body.content)
-          resp <- Created(result.toString)
+          prompt <- promptService.createPrompt(body.name, body.content)
+          resp <- Created(prompt)
         } yield resp
 
       case req @ PUT -> Root / "prompt" / UUIDVar(id) =>
         for {
           body <- req.as[UpdatePromptRequest]
           result <- promptService.updatePrompt(Prompt(id, body.name, body.content))
-          resp <- Ok(result.toString)
+          resp <- result match {
+            case Completion.Update(n) if n > 0 => Ok()
+            case _                             => NotFound()
+          }
         } yield resp
 
       case DELETE -> Root / "prompt" / UUIDVar(id) =>
-        for {
-          result <- promptService.deletePrompt(id)
-          resp <- Ok(result.toString)
-        } yield resp
+        promptService.deletePrompt(id).flatMap {
+          case Completion.Delete(n) if n > 0 => Ok()
+          case _                             => NotFound()
+        }
     }
   }
 }

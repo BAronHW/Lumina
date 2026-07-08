@@ -56,7 +56,7 @@ object TraceRoutes {
       case req @ POST -> Root / "traces" =>
         for {
           body <- req.as[CreateTraceRequest]
-          res <- traceService.createTrace(
+          trace <- traceService.createTrace(
             Trace(
               UUID.randomUUID(),
               body.agentId,
@@ -69,7 +69,7 @@ object TraceRoutes {
               body.tags
             )
           )
-          resp <- Created(res.toString)
+          resp <- Created(trace)
         } yield resp
 
       case DELETE -> Root / "traces" / UUIDVar(traceId) =>
@@ -94,21 +94,24 @@ object TraceRoutes {
               body.tags
             )
           )
-          resp <- Ok(res.toString)
+          resp <- res match {
+            case Completion.Update(n) if n > 0 => Ok()
+            case _                             => NotFound()
+          }
         } yield resp
 
       case req @ POST -> Root / "traces" / "batch" =>
         for {
           body <- req.as[List[CreateTraceRequest]]
-          res <- traceService.batchCreateTrace(createTraceRequestToTrace(body))
-          resp <- Created(res.toString)
+          _ <- traceService.batchCreateTrace(createTraceRequestToTrace(body))
+          resp <- Created()
         } yield resp
 
       case req @ PUT -> Root / "traces" / "batch" =>
         for {
           body <- req.as[List[EditTraceRequest]]
-          res <- traceService.batchUpdateTraces(editTraceRequestToTrace(body))
-          resp <- Ok(res.toString)
+          _ <- traceService.batchUpdateTraces(editTraceRequestToTrace(body))
+          resp <- Ok()
         } yield resp
 
       case GET -> Root / "traces" :? PageMatcher(page) +& PageSizeMatcher(pageSize) =>

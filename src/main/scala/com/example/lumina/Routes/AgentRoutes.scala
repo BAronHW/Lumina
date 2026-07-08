@@ -34,19 +34,16 @@ object AgentRoutes:
 
       case req @ POST -> Root / "agents" =>
         for {
-          body   <- req.as[CreateAgentRequest]
-          result <- service.createAgent(body.clientId, body.name)
-          resp   <- result match {
-            case Completion.Insert(n) if n > 0 => Created()
-            case _                             => InternalServerError()
-          }
+          body <- req.as[CreateAgentRequest]
+          agents <- service.createAgent(body.clientId, body.name)
+          resp <- Created(agents)
         } yield resp
 
       case req @ PUT -> Root / "agents" / UUIDVar(id) =>
         for {
-          body   <- req.as[UpdateAgentRequest]
+          body <- req.as[UpdateAgentRequest]
           result <- service.updateAgent(id, body.name)
-          resp   <- result match {
+          resp <- result match {
             case Completion.Update(n) if n > 0 => Ok()
             case _                             => NotFound()
           }

@@ -12,9 +12,9 @@ import java.util.UUID
 
 class AgentRepository[F[_]: Concurrent](session: Resource[F, Session[F]]) {
 
-  def createAgent(agent: Agent): F[Completion] =
+  def createAgent(agent: Agent): F[Agent] =
     session.use { s =>
-      s.prepare(AgentRepositoryQueries.insertAgent).flatMap(ps => ps.execute(agent))
+      s.prepare(AgentRepositoryQueries.insertAgent).flatMap(ps => ps.unique(agent))
     }
 
   def getAgentById(agentId: UUID): F[Option[Agent]] =
@@ -40,8 +40,9 @@ class AgentRepository[F[_]: Concurrent](session: Resource[F, Session[F]]) {
   private object AgentRepositoryQueries {
     private val agentCodec: Codec[Agent] = (uuid *: uuid *: varchar).to[Agent]
 
-    val insertAgent: Command[Agent] =
-      sql"INSERT INTO agent (id, client_id, name) VALUES ($uuid, $uuid, $varchar)".command
+    val insertAgent: Query[Agent, Agent] =
+      sql"INSERT INTO agent (id, client_id, name) VALUES ($uuid, $uuid, $varchar) RETURNING id, client_id, name"
+        .query(agentCodec)
         .contramap[Agent](a => a.id *: a.clientId *: a.name *: EmptyTuple)
 
     val selectAgentById: Query[UUID, Agent] =

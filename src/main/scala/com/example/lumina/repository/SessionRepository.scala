@@ -12,9 +12,9 @@ import java.util.UUID
 
 class SessionRepository[F[_]: Concurrent](session: Resource[F, Session[F]]) {
 
-  def createSession(s: DomainSession): F[Completion] =
+  def createSession(s: DomainSession): F[DomainSession] =
     session.use { sess =>
-      sess.prepare(SessionRepositoryQueries.insertSession).flatMap(ps => ps.execute(s))
+      sess.prepare(SessionRepositoryQueries.insertSession).flatMap(ps => ps.unique(s))
     }
 
   def getSessionById(sessionId: UUID): F[Option[DomainSession]] =
@@ -24,7 +24,9 @@ class SessionRepository[F[_]: Concurrent](session: Resource[F, Session[F]]) {
 
   def getSessionsByAgentId(agentId: UUID): F[List[DomainSession]] =
     session.use { sess =>
-      sess.prepare(SessionRepositoryQueries.selectSessionsByAgentId).flatMap(ps => ps.stream(agentId, 64).compile.toList)
+      sess
+        .prepare(SessionRepositoryQueries.selectSessionsByAgentId)
+        .flatMap(ps => ps.stream(agentId, 64).compile.toList)
     }
 
   def endSession(sessionId: UUID): F[Completion] =
@@ -42,9 +44,10 @@ class SessionRepository[F[_]: Concurrent](session: Resource[F, Session[F]]) {
     private val sessionCodec: Codec[DomainSession] =
       (uuid *: uuid *: varchar *: timestamptz *: timestamptz.opt).to[DomainSession]
 
-    val insertSession: Command[DomainSession] =
+    val insertSession: Query[DomainSession, DomainSession] =
       sql"""INSERT INTO session (id, agent_id, name, created_at, ended_at)
-            VALUES ($uuid, $uuid, $varchar, $timestamptz, ${timestamptz.opt})""".command
+            VALUES ($uuid, $uuid, $varchar, $timestamptz, ${timestamptz.opt}) RETURNING id, agent_id, name, created_at, ended_at"""
+        .query(sessionCodec)
         .contramap[DomainSession](s => s.id *: s.agentId *: s.name *: s.createdAt *: s.endedAt *: EmptyTuple)
 
     val selectSessionById: Query[UUID, DomainSession] =

@@ -10,7 +10,7 @@ import skunk.data.Completion
 import java.util.UUID
 
 trait AgentService[F[_]] {
-  def createAgent(clientId: UUID, name: String): F[Completion]
+  def createAgent(clientId: UUID, name: String): F[Agent]
   def getAgentById(agentId: UUID): F[Option[Agent]]
   def getAgentsByClientId(clientId: UUID): F[List[Agent]]
   def updateAgent(agentId: UUID, name: String): F[Completion]
@@ -20,7 +20,7 @@ trait AgentService[F[_]] {
 object AgentService {
   def impl[F[_]: Monad](agentRepository: AgentRepository[F], logger: Logger[F]): AgentService[F] =
     new AgentService[F] {
-      override def createAgent(clientId: UUID, name: String): F[Completion] =
+      override def createAgent(clientId: UUID, name: String): F[Agent] =
         val agent = Agent(UUID.randomUUID(), clientId, name)
         logger.info(s"Creating agent '$name' for client $clientId") *> agentRepository.createAgent(agent)
 

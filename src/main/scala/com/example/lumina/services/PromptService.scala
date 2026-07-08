@@ -10,7 +10,7 @@ import skunk.data.Completion
 import java.util.UUID
 
 trait PromptService[F[_]] {
-  def createPrompt(name: String, content: String): F[Completion]
+  def createPrompt(name: String, content: String): F[Prompt]
   def getPrompt(id: UUID): F[Option[Prompt]]
   def updatePrompt(prompt: Prompt): F[Completion]
   def deletePrompt(id: UUID): F[Completion]
@@ -19,7 +19,7 @@ trait PromptService[F[_]] {
 object PromptService {
   def impl[F[_]: Monad](promptRepository: PromptRepository[F], logger: Logger[F]): PromptService[F] =
     new PromptService[F] {
-      override def createPrompt(name: String, content: String): F[Completion] =
+      override def createPrompt(name: String, content: String): F[Prompt] =
         logger.info(s"Creating prompt: $name") *>
           promptRepository.createPrompt(Prompt(java.util.UUID.randomUUID(), name, content))
 
