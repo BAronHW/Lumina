@@ -1,0 +1,12 @@
+<component name="libraryTable">
+  <library name="sbt: org.tpolecat:natchez-core_3:0.3.10:jar" type="java-imported" external-system-id="SBT">
+    <properties groupId="org.tpolecat" artifactId="natchez-core_3" version="0.3.10" baseVersion="0.3.10" />
+    <CLASSES>
+      <root url="jar://$USER_HOME$/AppData/Local/Coursier/cache/v1/https/repo1.maven.org/maven2/org/tpolecat/natchez-core_3/0.3.10/natchez-core_3-0.3.10.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/AppData/Local/Coursier/cache/v1/https/repo1.maven.org/maven2/org/tpolecat/natchez-core_3/0.3.10/natchez-core_3-0.3.10-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
