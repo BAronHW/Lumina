@@ -6,7 +6,7 @@ import java.util.UUID
 
 case class Agent(
     id: UUID,
-    clientId: UUID,
+    deploymentId: UUID,
     name: String
 )
 

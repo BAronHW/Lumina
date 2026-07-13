@@ -16,7 +16,7 @@ import java.util.UUID
 
 object AgentRoutes:
 
-  private case class CreateAgentRequest(clientId: UUID, name: String)
+  private case class CreateAgentRequest(deploymentId: UUID, name: String)
   private case class UpdateAgentRequest(name: String)
 
   def agentRoutes[F[_]: Concurrent](service: AgentService[F]): HttpRoutes[F] =
@@ -29,13 +29,13 @@ object AgentRoutes:
           case None        => NotFound()
         }
 
-      case GET -> Root / "clients" / UUIDVar(clientId) / "agents" =>
-        service.getAgentsByClientId(clientId).flatMap(agents => Ok(agents))
+      case GET -> Root / "deployments" / UUIDVar(deploymentId) / "agents" =>
+        service.getAgentsByDeploymentId(deploymentId).flatMap(agents => Ok(agents))
 
       case req @ POST -> Root / "agents" =>
         for {
           body <- req.as[CreateAgentRequest]
-          agents <- service.createAgent(body.clientId, body.name)
+          agents <- service.createAgent(body.deploymentId, body.name)
           resp <- Created(agents)
         } yield resp
 

@@ -22,9 +22,9 @@ class AgentRepository[F[_]: Concurrent](session: Resource[F, Session[F]]) {
       s.prepare(AgentRepositoryQueries.selectAgentById).flatMap(pq => pq.option(agentId))
     }
 
-  def getAgentsByClientId(clientId: UUID): F[List[Agent]] =
+  def getAgentsByDeploymentId(deploymentId: UUID): F[List[Agent]] =
     session.use { s =>
-      s.prepare(AgentRepositoryQueries.selectAgentsByClientId).flatMap(pq => pq.stream(clientId, 64).compile.toList)
+      s.prepare(AgentRepositoryQueries.selectAgentsByDeploymentId).flatMap(pq => pq.stream(deploymentId, 64).compile.toList)
     }
 
   def updateAgent(agentId: UUID, name: String): F[Completion] =
@@ -41,15 +41,15 @@ class AgentRepository[F[_]: Concurrent](session: Resource[F, Session[F]]) {
     private val agentCodec: Codec[Agent] = (uuid *: uuid *: varchar).to[Agent]
 
     val insertAgent: Query[Agent, Agent] =
-      sql"INSERT INTO agent (id, client_id, name) VALUES ($uuid, $uuid, $varchar) RETURNING id, client_id, name"
+      sql"INSERT INTO agent (id, deployment_id, name) VALUES ($uuid, $uuid, $varchar) RETURNING id, deployment_id, name"
         .query(agentCodec)
-        .contramap[Agent](a => a.id *: a.clientId *: a.name *: EmptyTuple)
+        .contramap[Agent](a => a.id *: a.deploymentId *: a.name *: EmptyTuple)
 
     val selectAgentById: Query[UUID, Agent] =
-      sql"SELECT id, client_id, name FROM agent WHERE id = $uuid".query(agentCodec)
+      sql"SELECT id, deployment_id, name FROM agent WHERE id = $uuid".query(agentCodec)
 
-    val selectAgentsByClientId: Query[UUID, Agent] =
-      sql"SELECT id, client_id, name FROM agent WHERE client_id = $uuid".query(agentCodec)
+    val selectAgentsByDeploymentId: Query[UUID, Agent] =
+      sql"SELECT id, deployment_id, name FROM agent WHERE deployment_id = $uuid".query(agentCodec)
 
     val updateAgent: Command[String *: UUID *: EmptyTuple] =
       sql"UPDATE agent SET name = $varchar WHERE id = $uuid".command

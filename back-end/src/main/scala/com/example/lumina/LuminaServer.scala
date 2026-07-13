@@ -1,6 +1,6 @@
 package com.example.lumina
 import Domain.Span
-import Routes.{AgentRoutes, ClientRoutes, IngestRoutes, PromptRoutes, SessionRoutes, SpanRoutes, TraceRoutes}
+import Routes.{AgentRoutes, DeploymentRoutes, IngestRoutes, PromptRoutes, SessionRoutes, SpanRoutes, TraceRoutes}
 import Routes.Helper.ControllerErrorHandler
 import cats.syntax.semigroupk.*
 import cats.effect.{Async, Resource}
@@ -10,7 +10,7 @@ import com.comcast.ip4s.*
 import com.example.lumina.DB.DataBaseConnection
 import com.example.lumina.repository.{
   AgentRepository,
-  ClientRepository,
+  DeploymentRepository,
   PromptRepository,
   SessionRepository,
   SpanRepository,
@@ -18,7 +18,7 @@ import com.example.lumina.repository.{
 }
 import com.example.lumina.services.{
   AgentService,
-  ClientService,
+  DeploymentService,
   IngestBuffer,
   IngestService,
   PromptService,
@@ -61,7 +61,7 @@ object LuminaServer:
       queue <- Resource.eval(Queue.bounded[F, Span](256))
       logger = LoggerFactory[F].getLogger
       ingestBuffer = new IngestBuffer[F, Span](queue)
-      clientRepository = new ClientRepository(pooled)
+      deploymentRepository = new DeploymentRepository(pooled)
       promptRepository = new PromptRepository[F](pooled)
       traceRepository = new TraceRepository[F](pooled)
       spanRepository = new SpanRepository[F](pooled)
@@ -77,7 +77,7 @@ object LuminaServer:
       agentService = AgentService.impl[F](agentRepository, logger)
       sessionRepository = new SessionRepository[F](pooled)
       sessionService = SessionService.impl[F](sessionRepository, logger)
-      clientService = ClientService.impl[F](clientRepository, logger)
+      deploymentService = DeploymentService.impl[F](deploymentRepository, logger)
       ingestService = IngestService.impl[F](ingestBuffer, logger)
       promptService = PromptService.impl[F](promptRepository, logger)
       spanQueueWorker = SpanQueueWorker.impl[F](traceAssemblyService, workerConf)
@@ -86,7 +86,7 @@ object LuminaServer:
       httpApp = ControllerErrorHandler
         .handleRouteErrors(
           AgentRoutes.agentRoutes[F](agentService) <+>
-            ClientRoutes.clientRoutes[F](clientService) <+>
+            DeploymentRoutes.deploymentRoutes[F](deploymentService) <+>
             IngestRoutes.ingestRoutes[F](ingestService) <+>
             PromptRoutes.promptRoutes[F](promptService) <+>
             SessionRoutes.sessionRoutes[F](sessionService) <+>

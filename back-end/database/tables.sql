@@ -1,13 +1,13 @@
-CREATE TABLE IF NOT EXISTS client (
+CREATE TABLE IF NOT EXISTS deployment (
   id      UUID    PRIMARY KEY,
   name    VARCHAR UNIQUE NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS agent (
-    id        UUID PRIMARY KEY,
-    client_id UUID NOT NULL REFERENCES client(id),
-    name      VARCHAR NOT NULL,
-    UNIQUE(client_id, name)
+    id            UUID PRIMARY KEY,
+    deployment_id UUID NOT NULL REFERENCES deployment(id),
+    name          VARCHAR NOT NULL,
+    UNIQUE(deployment_id, name)
 );
 
 CREATE TYPE span_status AS ENUM ('ok', 'error');
@@ -90,8 +90,8 @@ CREATE TABLE IF NOT EXISTS eval_results (
 );
 
 CREATE TABLE IF NOT EXISTS deployments (
-    id          UUID PRIMARY KEY,
-    client_id   UUID NOT NULL REFERENCES client(id),
-    version     VARCHAR NOT NULL,
-    deployed_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    id            UUID PRIMARY KEY,
+    deployment_id UUID NOT NULL REFERENCES deployment(id),
+    version       VARCHAR NOT NULL,
+    deployed_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

@@ -10,9 +10,9 @@ import skunk.data.Completion
 import java.util.UUID
 
 trait AgentService[F[_]] {
-  def createAgent(clientId: UUID, name: String): F[Agent]
+  def createAgent(deploymentId: UUID, name: String): F[Agent]
   def getAgentById(agentId: UUID): F[Option[Agent]]
-  def getAgentsByClientId(clientId: UUID): F[List[Agent]]
+  def getAgentsByDeploymentId(deploymentId: UUID): F[List[Agent]]
   def updateAgent(agentId: UUID, name: String): F[Completion]
   def deleteAgent(agentId: UUID): F[Completion]
 }
@@ -20,15 +20,15 @@ trait AgentService[F[_]] {
 object AgentService {
   def impl[F[_]: Monad](agentRepository: AgentRepository[F], logger: Logger[F]): AgentService[F] =
     new AgentService[F] {
-      override def createAgent(clientId: UUID, name: String): F[Agent] =
-        val agent = Agent(UUID.randomUUID(), clientId, name)
-        logger.info(s"Creating agent '$name' for client $clientId") *> agentRepository.createAgent(agent)
+      override def createAgent(deploymentId: UUID, name: String): F[Agent] =
+        val agent = Agent(UUID.randomUUID(), deploymentId, name)
+        logger.info(s"Creating agent '$name' for deployment $deploymentId") *> agentRepository.createAgent(agent)
 
       override def getAgentById(agentId: UUID): F[Option[Agent]] =
         logger.info(s"Getting agent by id $agentId") *> agentRepository.getAgentById(agentId)
 
-      override def getAgentsByClientId(clientId: UUID): F[List[Agent]] =
-        logger.info(s"Getting agents for client $clientId") *> agentRepository.getAgentsByClientId(clientId)
+      override def getAgentsByDeploymentId(deploymentId: UUID): F[List[Agent]] =
+        logger.info(s"Getting agents for deployment $deploymentId") *> agentRepository.getAgentsByDeploymentId(deploymentId)
 
       override def updateAgent(agentId: UUID, name: String): F[Completion] =
         logger.info(s"Updating agent $agentId") *> agentRepository.updateAgent(agentId, name)
