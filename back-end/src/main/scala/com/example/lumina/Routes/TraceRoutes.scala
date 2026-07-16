@@ -17,8 +17,10 @@ import skunk.data.Completion
 import java.time.OffsetDateTime
 import java.util.UUID
 
+
 object TraceRoutes {
   private case class CreateTraceRequest(
+      id: UUID,
       agentId: UUID,
       sessionId: Option[UUID],
       name: String,
@@ -58,7 +60,7 @@ object TraceRoutes {
           body <- req.as[CreateTraceRequest]
           trace <- traceService.createTrace(
             Trace(
-              UUID.randomUUID(),
+              body.id,
               body.agentId,
               body.sessionId,
               body.name,
@@ -133,7 +135,7 @@ object TraceRoutes {
   private def createTraceRequestToTrace(createTraceRequests: List[CreateTraceRequest]): List[Trace] = {
     createTraceRequests.map { trace =>
       Trace(
-        id = UUID.randomUUID(),
+        id = trace.id,
         agentId = trace.agentId,
         sessionId = trace.sessionId,
         name = trace.name,

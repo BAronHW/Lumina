@@ -89,7 +89,7 @@ CREATE TABLE IF NOT EXISTS eval_results (
     run_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE IF NOT EXISTS deployments (
+CREATE TABLE IF NOT EXISTS deployment_version (
     id            UUID PRIMARY KEY,
     deployment_id UUID NOT NULL REFERENCES deployment(id),
     version       VARCHAR NOT NULL,
