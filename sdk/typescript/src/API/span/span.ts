@@ -16,3 +16,14 @@ export interface Span {
     output: Record<string, unknown>
     attributes: Record<string, unknown>
 }
+
+export interface StartSpanBody<T> {
+    id: UUID
+    traceId: UUID,
+    parentSpanId: UUID | null
+    name: string
+    kind: SpanKind
+    input: Record<string, unknown>
+    attributes: Record<string, unknown>
+    callback: ( {...args} ) => Promise<T>
+}
