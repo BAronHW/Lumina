@@ -17,13 +17,10 @@ export interface Span {
     attributes: Record<string, unknown>
 }
 
-export interface StartSpanBody<T> {
-    id: UUID
-    traceId: UUID,
-    parentSpanId: UUID | null
+export interface StartSpanBody<T, K> {
     name: string
     kind: SpanKind
-    input: Record<string, unknown>
-    attributes: Record<string, unknown>
-    callback: ( {...args} ) => Promise<T>
+    input: T
+    attributes?: Record<string, unknown>
+    callback: (input: T) => Promise<K>
 }

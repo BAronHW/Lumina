@@ -8,6 +8,7 @@ import type { Prompt } from "../prompt/prompt";
 import type { SpanStatus } from "../types";
 
 export type CreateTraceInput = {
+    id: UUID;
     agentId: UUID;
     sessionId?: UUID;
     name: string;

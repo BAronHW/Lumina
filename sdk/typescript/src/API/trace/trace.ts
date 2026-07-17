@@ -13,12 +13,11 @@ export interface Trace {
     tags: Record<string, string>
 }
 
-export interface StartTraceBody<T> {
-    id: UUID
-    agentId:UUID
-    name: string,
-    status: SpanStatus
-    startedAt: Date
-    tags: Record<string, string>
-    callback: ( {...args} ) => Promise<T>
+export interface StartTraceBody<T, K> {
+    agentId: UUID
+    sessionId?: UUID
+    name: string
+    tags?: Record<string, string>
+    input: T
+    callback: (input: T) => Promise<K>
 }
