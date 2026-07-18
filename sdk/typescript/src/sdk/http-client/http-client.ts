@@ -1,11 +1,11 @@
 import type { UUID } from "node:crypto";
-import type { Deployment } from "../api/deployment/deployment";
-import type { Agent } from "../api/agent/agent";
-import type { Session } from "../api/session/session";
-import type { Trace } from "../api/trace/trace";
-import type { Span } from "../api/span/span";
-import type { Prompt } from "../api/prompt/prompt";
-import type { CreateTraceInput, LuminaHttpClient, UpdateTraceInput } from "../api/http-client/http-client";
+import type { Deployment } from "../../api/deployment/deployment";
+import type { Agent } from "../../api/agent/agent";
+import type { Session } from "../../api/session/session";
+import type { Trace } from "../../api/trace/trace";
+import type { Span } from "../../api/span/span";
+import type { Prompt } from "../../api/prompt/prompt";
+import type { CreateTraceInput, LuminaHttpClient, UpdateTraceInput } from "../../api/http-client/http-client";
 
 export class LuminaHttpClientImpl implements LuminaHttpClient {
     private readonly baseUrl: string;
@@ -181,14 +181,7 @@ export class LuminaHttpClientImpl implements LuminaHttpClient {
     }
 
     async batchUpdateTraces(inputs: (UpdateTraceInput & { id: UUID })[]): Promise<void> {
-        await this.requestVoid(
-            "PUT",
-            "/traces/batch",
-            inputs.map((input) => {
-                const { id, ...rest } = input;
-                return { id, ...this.serializeTrace(rest) };
-            }),
-        );
+        await this.requestVoid("PUT", "/traces/batch", inputs.map((input) => this.serializeTrace(input)));
     }
 
     async listTraces(page: number, pageSize: number): Promise<Trace[]> {
