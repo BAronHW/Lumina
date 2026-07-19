@@ -168,8 +168,8 @@ export class LuminaHttpClientImpl implements LuminaHttpClient {
         return raw !== null ? this.parseTrace(raw) : null;
     }
 
-    async updateTrace(id: UUID, input: UpdateTraceInput): Promise<void> {
-        await this.requestVoid("PUT", `/traces/${id}`, this.serializeTrace(input));
+    async updateTrace(input: UpdateTraceInput): Promise<void> {
+        await this.requestVoid("PUT", `/traces/${input.id}`, this.serializeTrace(input));
     }
 
     async deleteTrace(id: UUID): Promise<void> {

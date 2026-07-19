@@ -42,10 +42,10 @@ export interface LuminaHttpClient {
 
     createTrace(input: CreateTraceInput): Promise<Trace>;
     getTrace(id: UUID): Promise<Trace | null>;
-    updateTrace(id: UUID, input: UpdateTraceInput): Promise<void>;
+    updateTrace(input: UpdateTraceInput): Promise<void>;
     deleteTrace(id: UUID): Promise<void>;
     batchCreateTraces(inputs: CreateTraceInput[]): Promise<void>;
-    batchUpdateTraces(inputs: (UpdateTraceInput & { id: UUID })[]): Promise<void>;
+    batchUpdateTraces(inputs: UpdateTraceInput[]): Promise<void>;
     listTraces(page: number, pageSize: number): Promise<Trace[]>;
     listTracesByAgent(agentId: UUID): Promise<Trace[]>;
     listFinishedTraces(page: number, pageSize: number): Promise<Trace[]>;
