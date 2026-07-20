@@ -43,10 +43,6 @@ export class LuminaSDKImpl implements LuminaSDK {
     };
   }
 
-  session<T>(name: string, callback: () => Promise<T>): Promise<T> {
-    throw new Error("Not implemented");
-  }
-
   async trace<T, K>(startTraceBody: StartTraceBody<T, K>): Promise<K> {
     const traceId = randomUUID();
     const startDate = new Date();
