@@ -1,6 +1,6 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 import { LuminaSDK } from "../../api/tracer-sdk";
-import { StartTraceBody } from "../../api/trace/trace";
+import { Trace, StartTraceBody } from "../../api/trace/trace";
 import { Span, StartSpanBody } from "../../api/span/span";
 import {
   LuminaHttpClient,
@@ -8,12 +8,12 @@ import {
 } from "../../api/http-client/http-client";
 import { GenericBuffer } from "../../api/ingest-buffer/ingest-buffer";
 import { Agent } from "../../api/agent/agent";
-import { UUID } from "node:crypto";
+import { UUID, randomUUID } from "node:crypto";
 import { SpanStatus } from "../../api/types";
 
 type SpanContext = {
-  traceId: string;
-  spanId: string | null;
+  traceId: UUID;
+  spanId: UUID | null;
 };
 
 export class LuminaSDKImpl implements LuminaSDK {
@@ -36,7 +36,7 @@ export class LuminaSDKImpl implements LuminaSDK {
     this.deploymentId = deploymentId;
 
     this.agentInstance = {
-      id: crypto.randomUUID(),
+      id: randomUUID(),
       deploymentId: this.deploymentId,
       name: this.name,
     };
@@ -47,39 +47,85 @@ export class LuminaSDKImpl implements LuminaSDK {
   }
 
   async trace<T, K>(startTraceBody: StartTraceBody<T, K>): Promise<K> {
-    const traceId = crypto.randomUUID();
+    const traceId = randomUUID();
     const startDate = new Date();
-    const traceShape = {
+    const baseTrace = {
       id: traceId,
       agentId: this.agentInstance.id,
+      sessionId: startTraceBody.sessionId,
       name: startTraceBody.name,
       status: "ok" as SpanStatus,
       startedAt: startDate,
       tags: startTraceBody.tags ?? {},
     };
-    await this.httpClient.createTrace(traceShape);
+    await this.httpClient.createTrace(baseTrace);
 
     return this.als.run({ traceId, spanId: null }, async () => {
-      try {
-        const callbackRes = await startTraceBody.callback(startTraceBody.input);
-        await this.httpClient.updateTrace({
-          ...traceShape,
-          endedAt: new Date(),
-        });
-        return callbackRes;
-      } catch (err) {
-        await this.httpClient.updateTrace({
-          ...traceShape,
-          status: "error" as SpanStatus,
-          endedAt: new Date(),
-        });
-        throw err;
-      }
+      const run = async (): Promise<{ result: K; error: null } | { result: undefined; error: unknown }> => {
+        try {
+          const result = await startTraceBody.callback(startTraceBody.input);
+          return { result, error: null };
+        } catch (err) {
+          return { result: undefined, error: err };
+        }
+      };
+
+      const { result, error: callbackError } = await run();
+      const status: SpanStatus = callbackError ? "error" : "ok";
+      const endedAt = new Date();
+
+      await this.httpClient.updateTrace({ ...baseTrace, status, endedAt });
+
+      if (callbackError) throw callbackError;
+      return result as K;
     });
   }
 
-  span<T, K>(startSpanBody: StartSpanBody<T, K>): Promise<K> {
-    throw new Error("Not implemented");
+  async span<T, K>(startSpanBody: StartSpanBody<T, K>): Promise<K> {
+    const spanId = randomUUID();
+    const startDate = new Date();
+    const store = this.als.getStore();
+
+    if (!store?.traceId) {
+      throw new Error("span() must be called within an active trace");
+    }
+
+    return this.als.run({ traceId: store.traceId, spanId }, async () => {
+      const run = async (): Promise<{ result: K; error: null } | { result: undefined; error: unknown }> => {
+        try {
+          const result = await startSpanBody.callback(startSpanBody.input);
+          return { result, error: null };
+        } catch (err) {
+          return { result: undefined, error: err };
+        }
+      };
+
+      const { result, error: callbackError } = await run();
+      const status: SpanStatus = callbackError ? "error" : "ok";
+      const errorMessage = callbackError instanceof Error ? callbackError.message : callbackError ? String(callbackError) : null;
+      const endedAt = new Date();
+
+      const span: Span = {
+        id: spanId,
+        traceId: store.traceId,
+        parentSpanId: store.spanId ?? null,
+        name: startSpanBody.name,
+        kind: startSpanBody.kind,
+        status,
+        error: errorMessage,
+        startedAt: startDate,
+        endedAt,
+        durationMs: endedAt.getTime() - startDate.getTime(),
+        input: startSpanBody.input as Record<string, unknown>,
+        output: result as Record<string, unknown> ?? {},
+        attributes: startSpanBody.attributes ?? {},
+      };
+
+      this.ingestBuffer.add(span);
+
+      if (callbackError) throw callbackError;
+      return result as K;
+    });
   }
 
   addAttribute(key: string, value: unknown): void {
