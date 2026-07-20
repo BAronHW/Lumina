@@ -14,6 +14,7 @@ import { SpanStatus } from "../../api/types";
 type SpanContext = {
   traceId: UUID;
   spanId: UUID | null;
+  span: Span | null;
 };
 
 export class LuminaSDKImpl implements LuminaSDK {
@@ -60,8 +61,10 @@ export class LuminaSDKImpl implements LuminaSDK {
     };
     await this.httpClient.createTrace(baseTrace);
 
-    return this.als.run({ traceId, spanId: null }, async () => {
-      const run = async (): Promise<{ result: K; error: null } | { result: undefined; error: unknown }> => {
+    return this.als.run({ traceId, spanId: null, span: null }, async () => {
+      const run = async (): Promise<
+        { result: K; error: null } | { result: undefined; error: unknown }
+      > => {
         try {
           const result = await startTraceBody.callback(startTraceBody.input);
           return { result, error: null };
@@ -90,8 +93,26 @@ export class LuminaSDKImpl implements LuminaSDK {
       throw new Error("span() must be called within an active trace");
     }
 
-    return this.als.run({ traceId: store.traceId, spanId }, async () => {
-      const run = async (): Promise<{ result: K; error: null } | { result: undefined; error: unknown }> => {
+    const span: Span = {
+      id: spanId,
+      traceId: store.traceId,
+      parentSpanId: store.spanId ?? null,
+      name: startSpanBody.name,
+      kind: startSpanBody.kind,
+      status: "ok",
+      error: null,
+      startedAt: startDate,
+      endedAt: null,
+      durationMs: null,
+      input: startSpanBody.input as Record<string, unknown>,
+      output: {},
+      attributes: startSpanBody.attributes ?? {},
+    };
+
+    return this.als.run({ traceId: store.traceId, spanId, span }, async () => {
+      const run = async (): Promise<
+        { result: K; error: null } | { result: undefined; error: unknown }
+      > => {
         try {
           const result = await startSpanBody.callback(startSpanBody.input);
           return { result, error: null };
@@ -101,25 +122,18 @@ export class LuminaSDKImpl implements LuminaSDK {
       };
 
       const { result, error: callbackError } = await run();
-      const status: SpanStatus = callbackError ? "error" : "ok";
-      const errorMessage = callbackError instanceof Error ? callbackError.message : callbackError ? String(callbackError) : null;
       const endedAt = new Date();
 
-      const span: Span = {
-        id: spanId,
-        traceId: store.traceId,
-        parentSpanId: store.spanId ?? null,
-        name: startSpanBody.name,
-        kind: startSpanBody.kind,
-        status,
-        error: errorMessage,
-        startedAt: startDate,
-        endedAt,
-        durationMs: endedAt.getTime() - startDate.getTime(),
-        input: startSpanBody.input as Record<string, unknown>,
-        output: result as Record<string, unknown> ?? {},
-        attributes: startSpanBody.attributes ?? {},
-      };
+      span.status = callbackError ? "error" : "ok";
+      span.error =
+        callbackError instanceof Error
+          ? callbackError.message
+          : callbackError
+            ? String(callbackError)
+            : null;
+      span.endedAt = endedAt;
+      span.durationMs = endedAt.getTime() - startDate.getTime();
+      span.output = (result as Record<string, unknown>) ?? {};
 
       this.ingestBuffer.add(span);
 
@@ -129,14 +143,21 @@ export class LuminaSDKImpl implements LuminaSDK {
   }
 
   addAttribute(key: string, value: unknown): void {
-    throw new Error("Not implemented");
+    const store = this.als.getStore();
+    if (store?.span) {
+      store.span.attributes[key] = value;
+    }
   }
 
   recordError(message: string): void {
-    throw new Error("Not implemented");
+    const store = this.als.getStore();
+    if (store?.span) {
+      store.span.error = message;
+      store.span.status = "error";
+    }
   }
 
-  shutdown(): Promise<void> {
-    throw new Error("Not implemented");
+  async shutdown(): Promise<void> {
+    await this.ingestBuffer.shutdown();
   }
 }
