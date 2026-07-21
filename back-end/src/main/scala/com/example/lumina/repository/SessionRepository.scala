@@ -2,11 +2,14 @@ package com.example.lumina.repository
 
 import cats.effect.{Concurrent, Resource}
 import cats.syntax.all.*
-import com.example.lumina.Domain.Session as DomainSession
+import com.example.lumina.Domain.{Session as DomainSession, SessionWithTraces, Trace}
+import com.example.lumina.types.SpanStatus
+import io.circe.{Decoder as CDecoder, Encoder as CEncoder}
 import skunk.*
+import skunk.circe.codec.all.jsonb
 import skunk.implicits.*
 import skunk.codec.all.*
-import skunk.data.Completion
+import skunk.data.{Completion, Type}
 
 import java.util.UUID
 

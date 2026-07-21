@@ -20,7 +20,13 @@ case class Trace(
     tags: Map[String, String]
 )
 
+case class TraceWithSpans(trace: Trace, spans: List[Span])
+
 object Trace {
   given Encoder[Trace] = deriveEncoder[Trace]
   given Decoder[Trace] = deriveDecoder[Trace]
+}
+
+object TraceWithSpans {
+  given Encoder[TraceWithSpans] = deriveEncoder[TraceWithSpans]
 }

@@ -2,9 +2,9 @@ package com.example.lumina.repository
 
 import cats.effect.Concurrent
 import cats.effect.kernel.Resource
-import com.example.lumina.types.SpanStatus
+import com.example.lumina.types.{SpanKind, SpanStatus}
 import cats.syntax.all.*
-import com.example.lumina.Domain.{Pagination, Trace}
+import com.example.lumina.Domain.{Pagination, Span, Trace, TraceWithSpans}
 import io.circe.{Decoder as CDecoder, Encoder as CEncoder}
 import skunk.*
 import skunk.circe.codec.all.jsonb
@@ -70,6 +70,17 @@ class TraceRepository[F[_]: Concurrent](session: Resource[F, Session[F]]) {
       s.prepare(TraceRepositoryQueries.selectFinishedTraces).flatMap(ps => ps.stream(pagination, 64).compile.toList)
     }
   }
+
+  def getTraceWithSpans(traceId: UUID): F[Option[TraceWithSpans]] =
+    session.use { s =>
+      s.prepare(TraceRepositoryQueries.selectTraceWithSpans).flatMap { ps =>
+        ps.stream(traceId, 64).compile.toList.map { rows =>
+          rows.headOption.map { case (trace, _) =>
+            TraceWithSpans(trace, rows.flatMap(_._2))
+          }
+        }
+      }
+    }
 
   private object TraceRepositoryQueries {
 
@@ -142,5 +153,21 @@ class TraceRepository[F[_]: Concurrent](session: Resource[F, Session[F]]) {
       sql"SELECT * FROM trace WHERE ended_at IS NOT NULL ORDER BY started_at DESC LIMIT ${int4} OFFSET ${int4}"
         .query(traceCodec)
         .contramap[Pagination](p => p.limit *: p.offset *: EmptyTuple)
+
+    private val spanKindCodec: Codec[SpanKind] =
+      varchar.imap(SpanKind.valueOf)(_.toString)
+
+    private val spanCodec: Codec[Span] =
+      (uuid *: uuid *: uuid.opt *: varchar *: spanKindCodec *: spanStatusCodec *:
+        text.opt *: timestamptz *: timestamptz.opt *: int4.opt *:
+        jsonb *: jsonb *: jsonb).to[Span]
+
+    val selectTraceWithSpans: Query[UUID, (Trace, Option[Span])] =
+      sql"""SELECT t.id, t.agent_id, t.session_id, t.name, t.status, t.started_at, t.ended_at, t.total_cost_usd, t.tags,
+                   s.id, s.trace_id, s.parent_span_id, s.name, s.kind, s.status, s.error, s.started_at, s.ended_at, s.duration_ms, s.input, s.output, s.attributes
+            FROM trace t
+            LEFT JOIN span s ON s.trace_id = t.id
+            WHERE t.id = $uuid"""
+        .query(traceCodec *: spanCodec.opt)
   }
 }
