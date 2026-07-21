@@ -2,7 +2,7 @@ package com.example.lumina.services
 
 import cats.Monad
 import cats.syntax.all.*
-import com.example.lumina.Domain.{Pagination, Trace}
+import com.example.lumina.Domain.{Pagination, Trace, TraceWithSpans}
 import com.example.lumina.repository.TraceRepository
 import org.typelevel.log4cats.Logger
 import skunk.data.Completion
@@ -20,6 +20,7 @@ trait TraceService[F[_]] {
   def getAllTraces(pagination: Pagination): F[List[Trace]]
   def getTracesByAgentId(agentId: UUID): F[List[Trace]]
   def getAllFinishedTraces(pagination: Pagination): F[List[Trace]]
+  def getTraceWithSpans(traceId: UUID): F[Option[TraceWithSpans]]
 }
 
 object TraceService {
@@ -57,8 +58,10 @@ object TraceService {
         logger.info(s"Getting all traces belonging to agent with id of ${agentId}") *> traceRepository
           .getTracesByAgentId(agentId)
 
-      override def getAllFinishedTraces(pagination: Pagination): F[List[Trace]] = {
+      override def getAllFinishedTraces(pagination: Pagination): F[List[Trace]] =
         logger.info(s"Getting all traces that have finished") *> traceRepository.getAllFinishedTraces(pagination)
-      }
+
+      override def getTraceWithSpans(traceId: UUID): F[Option[TraceWithSpans]] =
+        logger.info(s"Getting trace with spans: $traceId") *> traceRepository.getTraceWithSpans(traceId)
     }
 }

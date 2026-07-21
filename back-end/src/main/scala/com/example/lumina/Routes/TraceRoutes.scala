@@ -1,9 +1,10 @@
 package com.example.lumina.Routes
 
 import com.example.lumina.Domain.Trace.given
+import com.example.lumina.Domain.TraceWithSpans.given
 import cats.effect.Concurrent
 import cats.syntax.all.*
-import com.example.lumina.Domain.{Pagination, Trace}
+import com.example.lumina.Domain.{Pagination, Trace, TraceWithSpans}
 import com.example.lumina.services.TraceService
 import com.example.lumina.types.SpanStatus
 import com.example.lumina.types.given
@@ -50,9 +51,9 @@ object TraceRoutes {
 
     HttpRoutes.of[F] {
       case GET -> Root / "traces" / UUIDVar(traceId) =>
-        traceService.selectTrace(traceId).flatMap {
-          case Some(trace) => Ok(trace)
-          case None        => NotFound()
+        traceService.getTraceWithSpans(traceId).flatMap {
+          case Some(traceWithSpans) => Ok(traceWithSpans)
+          case None                 => NotFound()
         }
 
       case req @ POST -> Root / "traces" =>
