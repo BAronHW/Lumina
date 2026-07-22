@@ -82,6 +82,11 @@ class TraceRepository[F[_]: Concurrent](session: Resource[F, Session[F]]) {
       }
     }
 
+  def timeOutStaleTraces(): F[Completion] =
+    session.use { s =>
+      s.prepare(TraceRepositoryQueries.timeOutStaleTraces()).flatMap(ps => ps.execute(Void))
+    }
+
   private object TraceRepositoryQueries {
 
     private val spanStatusCodec: Codec[SpanStatus] =
@@ -145,6 +150,10 @@ class TraceRepository[F[_]: Concurrent](session: Resource[F, Session[F]]) {
                     status = 'ok'::span_status
                WHERE trace.id IN ($enc)""".command
     }
+
+    def timeOutStaleTraces(): Command[Void] =
+      sql"""UPDATE trace SET ended_at = NOW(), status = 'error'::span_status
+            WHERE ended_at IS NULL AND started_at < NOW() - INTERVAL '10 minutes'""".command
 
     val selectTracesByAgentId: Query[UUID, Trace] =
       sql"""SELECT * FROM trace WHERE agent_id = $uuid""".query(traceCodec)

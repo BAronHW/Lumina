@@ -48,6 +48,11 @@ class SpanRepository[F[_]: Concurrent](session: Resource[F, Session[F]]) {
       s.prepare(SpanRepositoryQueries.selectAllSpans).flatMap(ps => ps.stream(pagination, 64).compile.toList)
     }
 
+  def timeoutStaleSpan(): F[Completion] =
+    session.use { s =>
+      s.prepare(SpanRepositoryQueries.timeoutStaleSpan()).flatMap(ps => ps.execute(Void))
+    }
+
   private object SpanRepositoryQueries {
     private val spanKindCodec: Codec[SpanKind] =
       varchar.imap(SpanKind.valueOf)(_.toString)
@@ -70,6 +75,11 @@ class SpanRepository[F[_]: Concurrent](session: Resource[F, Session[F]]) {
     def createBatchSpan(spanList: List[Span]): Command[spanList.type] = {
       val enc = spanCodec.values.list(spanList)
       sql"INSERT INTO span VALUES $enc".command
+    }
+
+    def timeoutStaleSpan(): Command[Void] = {
+      sql"""UPDATE span SET ended_at = NOW(), status = 'error'
+           |WHERE ended_at IS NULL AND started_at < NOW() - INTERVAL '10 minutes'""".command
     }
 
     val selectSpanById: Query[UUID, Span] = {

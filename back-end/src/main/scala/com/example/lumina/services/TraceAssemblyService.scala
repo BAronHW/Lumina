@@ -30,6 +30,9 @@ object TraceAssemblyService {
         result <-
           if (items.isEmpty) Concurrent[F].pure(false)
           else spanService.createBatchSpan(items) *> updateCompletedTrace(items)
+
+        _ <- traceService.timeoutStaleTraces()
+        _ <- spanService.timeoutStaleSpan()
       } yield result
 
     /** This function flushes the ingest buffer so that all spans that were in the buffer will now be removed. The

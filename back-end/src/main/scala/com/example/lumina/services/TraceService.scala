@@ -21,6 +21,7 @@ trait TraceService[F[_]] {
   def getTracesByAgentId(agentId: UUID): F[List[Trace]]
   def getAllFinishedTraces(pagination: Pagination): F[List[Trace]]
   def getTraceWithSpans(traceId: UUID): F[Option[TraceWithSpans]]
+  def timeoutStaleTraces(): F[Completion]
 }
 
 object TraceService {
@@ -63,5 +64,8 @@ object TraceService {
 
       override def getTraceWithSpans(traceId: UUID): F[Option[TraceWithSpans]] =
         logger.info(s"Getting trace with spans: $traceId") *> traceRepository.getTraceWithSpans(traceId)
+
+      override def timeoutStaleTraces(): F[Completion] =
+        logger.info(s"Timing out stale traces") *> traceRepository.timeOutStaleTraces()
     }
 }

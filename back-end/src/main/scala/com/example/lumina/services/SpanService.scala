@@ -15,6 +15,7 @@ trait SpanService[F[_]] {
   def updateSpan(span: Span): F[Completion]
   def deleteSpanById(spanId: UUID): F[Completion]
   def getAllSpan(pagination: Pagination): F[List[Span]]
+  def timeoutStaleSpan(): F[Completion]
 }
 
 /** This is the service in charge of creating all the spans in this system it should create all spans in buffers and
@@ -42,6 +43,10 @@ object SpanService {
 
       override def getAllSpan(pagination: Pagination): F[List[Span]] = {
         logger.info(s"Get All span") *> spanRepository.getAllSpans(pagination)
+      }
+
+      override def timeoutStaleSpan(): F[Completion] = {
+        logger.info(s"timeoutStaleSpan") *> spanRepository.timeoutStaleSpan()
       }
     }
 }
