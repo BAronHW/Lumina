@@ -79,7 +79,7 @@ class SpanRepository[F[_]: Concurrent](session: Resource[F, Session[F]]) {
 
     def timeoutStaleSpan(): Command[Void] = {
       sql"""UPDATE span SET ended_at = NOW(), status = 'error'::span_status
-           |WHERE ended_at IS NULL AND started_at < NOW() - INTERVAL '10 minutes'""".command
+           WHERE ended_at IS NULL AND started_at < NOW() - INTERVAL '10 minutes'""".command
     }
 
     val selectSpanById: Query[UUID, Span] = {
