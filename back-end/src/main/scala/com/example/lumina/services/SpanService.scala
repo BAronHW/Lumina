@@ -34,7 +34,7 @@ object SpanService {
           Monad[F].pure(Completion.Insert(0))
         }
       }
-
+      
       override def updateSpan(span: Span): F[Completion] =
         logger.info(s"Updating span: ${span.id}") *> spanRepository.updateSpanById(spanBody = span)
 

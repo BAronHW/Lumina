@@ -1,6 +1,10 @@
 export { LuminaSDKImpl } from './sdk/lumina-sdk/lumina-sdk'
+export { LuminaHttpClientImpl } from './sdk/http-client/http-client'
+export { IngestBufferImpl } from './sdk/ingest-buffer/ingest-buffer'
 
 export type { LuminaSDK } from './api/tracer-sdk'
+export type { LuminaHttpClient } from './api/http-client/http-client'
+export type { GenericBuffer } from './api/ingest-buffer/ingest-buffer'
 export type { StartTraceBody } from './api/trace/trace'
 export type { StartSpanBody } from './api/span/span'
 export type { SpanKind, SpanStatus } from './api/types'

@@ -120,13 +120,15 @@ export class LuminaSDKImpl implements LuminaSDK {
       const { result, error: callbackError } = await run();
       const endedAt = new Date();
 
-      span.status = callbackError ? "error" : "ok";
-      span.error =
-        callbackError instanceof Error
-          ? callbackError.message
-          : callbackError
-            ? String(callbackError)
-            : null;
+      // only overwrite on failure — a success must not erase what
+      // recordError() set during the callback
+      if (callbackError) {
+        span.status = "error";
+        span.error =
+          callbackError instanceof Error
+            ? callbackError.message
+            : String(callbackError);
+      }
       span.endedAt = endedAt;
       span.durationMs = endedAt.getTime() - startDate.getTime();
       span.output = (result as Record<string, unknown>) ?? {};

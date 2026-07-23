@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS deployment (
 
 CREATE TABLE IF NOT EXISTS agent (
     id            UUID PRIMARY KEY,
-    deployment_id UUID NOT NULL REFERENCES deployment(id),
+    deployment_id UUID NOT NULL REFERENCES deployment(id) ON DELETE CASCADE,
     name          VARCHAR NOT NULL,
     UNIQUE(deployment_id, name)
 );
@@ -14,7 +14,7 @@ CREATE TYPE span_status AS ENUM ('ok', 'error');
 
 CREATE TABLE IF NOT EXISTS session (
     id         UUID PRIMARY KEY,
-    agent_id   UUID NOT NULL REFERENCES agent(id),
+    agent_id   UUID NOT NULL REFERENCES agent(id) ON DELETE CASCADE,
     name       VARCHAR NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     ended_at   TIMESTAMPTZ
@@ -22,8 +22,8 @@ CREATE TABLE IF NOT EXISTS session (
 
 CREATE TABLE IF NOT EXISTS trace (
   id             UUID PRIMARY KEY,
-  agent_id       UUID NOT NULL REFERENCES agent(id),
-  session_id     UUID REFERENCES session(id),
+  agent_id       UUID NOT NULL REFERENCES agent(id) ON DELETE CASCADE,
+  session_id     UUID REFERENCES session(id) ON DELETE SET NULL,
   name           VARCHAR NOT NULL,
   status         span_status NOT NULL,
   started_at     TIMESTAMPTZ NOT NULL,
@@ -34,8 +34,8 @@ CREATE TABLE IF NOT EXISTS trace (
 
  CREATE TABLE IF NOT EXISTS span (
   id             UUID PRIMARY KEY,
-  trace_id       UUID NOT NULL REFERENCES trace(id),
-  parent_span_id UUID REFERENCES span(id),
+  trace_id       UUID NOT NULL REFERENCES trace(id) ON DELETE CASCADE,
+  parent_span_id UUID REFERENCES span(id) ON DELETE CASCADE,
   name           VARCHAR NOT NULL,
   kind           VARCHAR NOT NULL,
   status         span_status NOT NULL,
@@ -56,7 +56,7 @@ CREATE TABLE IF NOT EXISTS prompts (
 
 CREATE TABLE IF NOT EXISTS prompt_versions (
     id         UUID PRIMARY KEY,
-    prompt_id  UUID NOT NULL REFERENCES prompts(id),
+    prompt_id  UUID NOT NULL REFERENCES prompts(id) ON DELETE CASCADE,
     version    INTEGER NOT NULL,
     content    TEXT NOT NULL,
     variables  JSONB DEFAULT '[]',
@@ -78,9 +78,9 @@ CREATE TABLE IF NOT EXISTS eval_runs (
 
 CREATE TABLE IF NOT EXISTS eval_results (
     id          UUID PRIMARY KEY,
-    eval_run_id UUID REFERENCES eval_runs(id),
-    trace_id    UUID NOT NULL REFERENCES trace(id),
-    span_id     UUID REFERENCES span(id),
+    eval_run_id UUID REFERENCES eval_runs(id) ON DELETE CASCADE,
+    trace_id    UUID NOT NULL REFERENCES trace(id) ON DELETE CASCADE,
+    span_id     UUID REFERENCES span(id) ON DELETE SET NULL,
     eval_name   VARCHAR NOT NULL,
     scorer_type VARCHAR NOT NULL,
     passed      BOOLEAN NOT NULL,
@@ -91,7 +91,7 @@ CREATE TABLE IF NOT EXISTS eval_results (
 
 CREATE TABLE IF NOT EXISTS deployment_version (
     id            UUID PRIMARY KEY,
-    deployment_id UUID NOT NULL REFERENCES deployment(id),
+    deployment_id UUID NOT NULL REFERENCES deployment(id) ON DELETE CASCADE,
     version       VARCHAR NOT NULL,
     deployed_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

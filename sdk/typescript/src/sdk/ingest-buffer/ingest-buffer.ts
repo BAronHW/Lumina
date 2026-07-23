@@ -4,30 +4,35 @@ import { Span } from "../../api/span/span";
 
 export class IngestBufferImpl implements GenericBuffer<Span> {
   private buffer: Span[] = [];
+  private flushing = false;
   private readonly httpClient: LuminaHttpClient;
   private timer: ReturnType<typeof setInterval>;
 
   constructor(httpClient: LuminaHttpClient, flushInterval: number) {
     this.httpClient = httpClient;
-    this.timer = setInterval(() => this.flush(), flushInterval);
+    this.timer = setInterval(() => this.flush().catch(() => {}), flushInterval);
   }
 
   add(span: Span): void {
     this.buffer.push(span);
   }
 
-  flush(): Promise<void> {
-    return new Promise((resolve, _) => {
-      const spansToSend = this.buffer;
-      this.buffer = [];
-      resolve(this.httpClient.ingestSpans(spansToSend));
-    });
+  async flush(): Promise<void> {
+    if (this.flushing || this.buffer.length === 0) return;
+    this.flushing = true;
+    try {
+      // spans stay in the buffer until the send succeeds, so a failed
+      // flush retries them on the next tick instead of dropping them
+      const count = this.buffer.length;
+      await this.httpClient.ingestSpans(this.buffer.slice(0, count));
+      this.buffer.splice(0, count);
+    } finally {
+      this.flushing = false;
+    }
   }
 
-  shutdown(): Promise<void> {
-    return new Promise(async (resolve, _) => {
-      clearInterval(this.timer);
-      return this.flush();
-    });
+  async shutdown(): Promise<void> {
+    clearInterval(this.timer);
+    await this.flush();
   }
 }
