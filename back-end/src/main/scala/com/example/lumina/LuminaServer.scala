@@ -1,5 +1,4 @@
 package com.example.lumina
-import Domain.Span
 import Routes.{AgentRoutes, DeploymentRoutes, IngestRoutes, PromptRoutes, SessionRoutes, SpanRoutes, TraceRoutes}
 import Routes.Helper.ControllerErrorHandler
 import cats.syntax.semigroupk.*
@@ -8,27 +7,9 @@ import cats.effect.syntax.all.*
 import cats.effect.std.{Console, Queue}
 import com.comcast.ip4s.*
 import com.example.lumina.DB.DataBaseConnection
-import com.example.lumina.repository.{
-  AgentRepository,
-  DeploymentRepository,
-  PromptRepository,
-  SessionRepository,
-  SpanRepository,
-  TraceRepository
-}
-import com.example.lumina.services.{
-  AgentService,
-  DeploymentService,
-  IngestBuffer,
-  IngestService,
-  PromptService,
-  SessionService,
-  SpanQueueWorker,
-  SpanService,
-  TraceAssemblyService,
-  TraceService
-}
-import com.example.lumina.types.{Config, WorkerConfig}
+import com.example.lumina.repository.{AgentRepository, DeploymentRepository, PromptRepository, SessionRepository, SpanRepository, TraceRepository}
+import com.example.lumina.services.{AgentService, DeploymentService, IngestBuffer, IngestService, PromptService, SessionService, SpanQueueWorker, SpanService, TraceAssemblyService, TraceService}
+import com.example.lumina.types.{Config, CreateSpanRequest, WorkerConfig}
 import fs2.io.net.Network
 import org.http4s.ember.server.EmberServerBuilder
 import org.http4s.implicits.*
@@ -58,9 +39,9 @@ object LuminaServer:
         )
       )
       pooled <- DataBaseConnection.pooled(conf)
-      queue <- Resource.eval(Queue.bounded[F, Span](256))
+      queue <- Resource.eval(Queue.bounded[F, CreateSpanRequest](256))
       logger = LoggerFactory[F].getLogger
-      ingestBuffer = new IngestBuffer[F, Span](queue)
+      ingestBuffer = new IngestBuffer[F, CreateSpanRequest](queue)
       deploymentRepository = new DeploymentRepository(pooled)
       promptRepository = new PromptRepository[F](pooled)
       traceRepository = new TraceRepository[F](pooled)

@@ -8,56 +8,52 @@ import type { Prompt } from "../prompt/prompt";
 import type { SpanStatus } from "../types";
 
 export type CreateTraceInput = {
-    id: UUID;
-    agentId: UUID;
-    sessionId?: UUID;
-    name: string;
-    status: SpanStatus;
-    startedAt: Date;
-    endedAt?: Date;
-    totalCostUsd?: number;
-    tags: Record<string, string>;
+  id: UUID;
+  agentId: UUID;
+  sessionId?: UUID;
+  name: string;
+  status: SpanStatus;
+  startedAt: Date;
+  endedAt?: Date;
+  totalCostUsd?: number;
+  tags: Record<string, string>;
 };
 
 export type UpdateTraceInput = CreateTraceInput;
 
 export interface LuminaHttpClient {
-    createDeployment(name: string): Promise<Deployment>;
-    getDeployment(id: UUID): Promise<Deployment | null>;
-    updateDeployment(id: UUID, name: string): Promise<void>;
-    deleteDeployment(id: UUID): Promise<void>;
-    listDeployments(page: number, pageSize: number): Promise<Deployment[]>;
+  createDeployment(name: string): Promise<Deployment>;
+  getDeployment(id: UUID): Promise<Deployment | null>;
+  updateDeployment(id: UUID, name: string): Promise<void>;
+  deleteDeployment(id: UUID): Promise<void>;
+  listDeployments(page: number, pageSize: number): Promise<Deployment[]>;
 
-    createAgent(deploymentId: UUID, name: string): Promise<Agent>;
-    getAgent(id: UUID): Promise<Agent | null>;
-    listAgentsByDeployment(deploymentId: UUID): Promise<Agent[]>;
-    updateAgent(id: UUID, name: string): Promise<void>;
-    deleteAgent(id: UUID): Promise<void>;
+  createAgent(deploymentId: UUID, name: string): Promise<Agent>;
+  getAgent(id: UUID): Promise<Agent | null>;
+  listAgentsByDeployment(deploymentId: UUID): Promise<Agent[]>;
+  updateAgent(id: UUID, name: string): Promise<void>;
+  deleteAgent(id: UUID): Promise<void>;
 
-    createSession(agentId: UUID, name: string): Promise<Session>;
-    getSession(id: UUID): Promise<Session | null>;
-    listSessionsByAgent(agentId: UUID): Promise<Session[]>;
-    endSession(id: UUID): Promise<void>;
-    deleteSession(id: UUID): Promise<void>;
+  createSession(agentId: UUID, name: string): Promise<Session>;
+  getSession(id: UUID): Promise<Session | null>;
+  listSessionsByAgent(agentId: UUID): Promise<Session[]>;
+  endSession(id: UUID): Promise<void>;
+  deleteSession(id: UUID): Promise<void>;
 
-    createTrace(input: CreateTraceInput): Promise<Trace>;
-    getTrace(id: UUID): Promise<Trace | null>;
-    updateTrace(input: UpdateTraceInput): Promise<void>;
-    deleteTrace(id: UUID): Promise<void>;
-    batchCreateTraces(inputs: CreateTraceInput[]): Promise<void>;
-    batchUpdateTraces(inputs: UpdateTraceInput[]): Promise<void>;
-    listTraces(page: number, pageSize: number): Promise<Trace[]>;
-    listTracesByAgent(agentId: UUID): Promise<Trace[]>;
-    listFinishedTraces(page: number, pageSize: number): Promise<Trace[]>;
+  getTrace(id: UUID): Promise<Trace | null>;
+  deleteTrace(id: UUID): Promise<void>;
 
-    getSpan(id: UUID): Promise<Span | null>;
-    listSpans(page: number, pageSize: number): Promise<Span[]>;
+  listTraces(page: number, pageSize: number): Promise<Trace[]>;
+  listTracesByAgent(agentId: UUID): Promise<Trace[]>;
+  listFinishedTraces(page: number, pageSize: number): Promise<Trace[]>;
 
-    ingestSpans(spans: Span[]): Promise<void>;
+  getSpan(id: UUID): Promise<Span | null>;
+  listSpans(page: number, pageSize: number): Promise<Span[]>;
 
-    createPrompt(name: string, content: string): Promise<Prompt>;
-    getPrompt(id: UUID): Promise<Prompt | null>;
-    updatePrompt(id: UUID, name: string, content: string): Promise<void>;
-    deletePrompt(id: UUID): Promise<void>;
+  ingestSpans(spans: Span[]): Promise<void>;
+
+  createPrompt(name: string, content: string): Promise<Prompt>;
+  getPrompt(id: UUID): Promise<Prompt | null>;
+  updatePrompt(id: UUID, name: string, content: string): Promise<void>;
+  deletePrompt(id: UUID): Promise<void>;
 }
-

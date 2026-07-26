@@ -36,7 +36,7 @@ object SpanService {
       }
       
       override def updateSpan(span: Span): F[Completion] =
-        logger.info(s"Updating span: ${span.id}") *> spanRepository.updateSpanById(spanBody = span)
+        logger.info(s"Updating span: ${span.spanId}") *> spanRepository.updateSpanById(spanBody = span)
 
       override def deleteSpanById(spanId: UUID): F[Completion] =
         logger.info(s"Deleting span: $spanId") *> spanRepository.deleteSpanById(spanId)

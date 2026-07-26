@@ -105,7 +105,7 @@ class SpanRepository[F[_]: Concurrent](session: Resource[F, Session[F]]) {
           WHERE id = $uuid""".command.contramap[Span] { s =>
         s.traceId *: s.parentSpanId *: s.name *: s.kind *: s.status *:
           s.error *: s.startedAt *: s.endedAt *: s.durationMs *:
-          s.input *: s.output *: s.attributes *: s.id *: EmptyTuple
+          s.input *: s.output *: s.attributes *: s.spanId *: EmptyTuple
       }
   }
 }

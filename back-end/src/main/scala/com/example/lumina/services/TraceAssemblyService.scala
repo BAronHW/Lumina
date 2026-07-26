@@ -3,6 +3,7 @@ package com.example.lumina.services
 import cats.effect.Concurrent
 import cats.syntax.all.*
 import com.example.lumina.Domain.Span
+import com.example.lumina.types.CreateSpanRequest
 import org.typelevel.log4cats.Logger
 import skunk.data.Completion
 
@@ -13,10 +14,10 @@ trait TraceAssemblyService[F[_]] {
 
 object TraceAssemblyService {
   def impl[F[_]: Concurrent](
-      ingestBuffer: IngestBuffer[F, Span],
-      spanService: SpanService[F],
-      traceService: TraceService[F],
-      logger: Logger[F]
+    ingestBuffer: IngestBuffer[F, CreateSpanRequest],
+    spanService: SpanService[F],
+    traceService: TraceService[F],
+    logger: Logger[F]
   ): TraceAssemblyService[F] = new TraceAssemblyService[F] {
 
     /** This function will take spans contained in the ingest buffer and then generate them using the span service. It
@@ -26,10 +27,25 @@ object TraceAssemblyService {
     override def processSpans(chunksToTake: Int): F[Boolean] =
       for {
         items <- ingestBuffer.tryTakeN(chunksToTake)
+        spans = items.map(elem => Span(
+          spanId = elem.spanId,
+          traceId = elem.traceId,
+          parentSpanId = elem.parentSpanId,
+          name = elem.name,
+          kind = elem.kind,
+          status = elem.status,
+          error = elem.error,
+          startedAt = elem.startedAt,
+          endedAt = elem.endedAt,
+          durationMs = elem.durationMs,
+          input = elem.input,
+          output = elem.output,
+          attributes = elem.attributes
+        ))
         _ <- logger.info(s"Processing ${items.size} spans from queue")
         result <-
           if (items.isEmpty) Concurrent[F].pure(false)
-          else spanService.createBatchSpan(items) *> updateCompletedTrace(items)
+          else spanService.createBatchSpan(spans) *> updateCompletedTrace(items)
 
         _ <- traceService.timeoutStaleTraces()
         _ <- spanService.timeoutStaleSpan()
@@ -55,10 +71,10 @@ object TraceAssemblyService {
       * remain. We then group these remaining spans by their TraceId's and then we get the keys which are the traceId
       * and then turn them into a list
       */
-    def updateCompletedTrace(spanList: List[Span]): F[Boolean] = {
+    def updateCompletedTrace(spanList: List[CreateSpanRequest]): F[Boolean] = {
       val traceIdList = spanList
-        .filter(span => span.endedAt.isDefined)
-        .groupBy(span => span.traceId)
+        .filter(elem => elem.parentSpanId.isEmpty && elem.endedAt.isDefined)
+        .groupBy(elem => elem.traceId)
         .keys
         .toList
 

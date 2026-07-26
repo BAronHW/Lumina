@@ -1,9 +1,9 @@
-import { UUID } from "node:crypto"
+import { UUID } from "node:crypto";
 
 export interface Session {
-    id: UUID
-    agentId: UUID
-    name: string
-    createdAt: Date
-    endedAt: Date | null
+  id: UUID;
+  agentId: UUID;
+  name: string;
+  createdAt: Date;
+  endedAt: Date | null;
 }

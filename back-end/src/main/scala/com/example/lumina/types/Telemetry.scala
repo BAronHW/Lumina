@@ -1,6 +1,5 @@
 package com.example.lumina.types
 
-import com.example.lumina.Domain.Span
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 import java.util.UUID
@@ -36,12 +35,23 @@ object SpanStatus:
     }
   }
 
-object Span:
-  given Encoder[Span] = deriveEncoder[Span]
-  given Decoder[Span] = deriveDecoder[Span]
-
 case class CreateSpanRequest(
-    spans: List[Span]
+    spanId: UUID,
+    traceId: UUID,
+    parentSpanId: Option[UUID],
+    name: String,
+    kind: SpanKind,
+    status: SpanStatus,
+    error: Option[String],
+    startedAt: OffsetDateTime,
+    endedAt: Option[OffsetDateTime],
+    durationMs: Option[Int],
+    input: Json,
+    output: Json,
+    attributes: Json,
+    agentId: UUID,
+    sessionId: Option[UUID],
+    tags: Json
 )
 
 object CreateSpanRequest:

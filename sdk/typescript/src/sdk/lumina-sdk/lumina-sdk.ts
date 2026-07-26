@@ -1,20 +1,18 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 import { LuminaSDK } from "../../api/tracer-sdk";
-import { Trace, StartTraceBody } from "../../api/trace/trace";
+import { StartTraceBody } from "../../api/trace/trace";
 import { Span, StartSpanBody } from "../../api/span/span";
-import {
-  LuminaHttpClient,
-  UpdateTraceInput,
-} from "../../api/http-client/http-client";
+import { LuminaHttpClient } from "../../api/http-client/http-client";
 import { GenericBuffer } from "../../api/ingest-buffer/ingest-buffer";
 import { Agent } from "../../api/agent/agent";
 import { UUID, randomUUID } from "node:crypto";
-import { SpanStatus } from "../../api/types";
 
 type SpanContext = {
   traceId: UUID;
   spanId: UUID | null;
   span: Span | null;
+  sessionId: UUID | null;
+  tags: Record<string, unknown>;
 };
 
 export class LuminaSDKImpl implements LuminaSDK {
@@ -57,8 +55,11 @@ export class LuminaSDKImpl implements LuminaSDK {
     const rootSpanId = randomUUID();
     const startDate = new Date();
 
+    const sessionId = startTraceBody.sessionId ?? null;
+    const tags = startTraceBody.tags ?? {};
+
     const rootSpan: Span = {
-      id: rootSpanId,
+      spanId: rootSpanId,
       traceId: traceId,
       parentSpanId: null,
       name: startTraceBody.name,
@@ -71,10 +72,13 @@ export class LuminaSDKImpl implements LuminaSDK {
       input: startTraceBody.input as Record<string, unknown>,
       output: {},
       attributes: {},
+      agentId: this.agentInstance.id,
+      sessionId,
+      tags,
     };
 
     return this.als.run(
-      { traceId, spanId: rootSpanId, span: rootSpan },
+      { traceId, spanId: rootSpanId, span: rootSpan, sessionId, tags },
       async () => {
         const run = async (): Promise<
           { result: K; error: null } | { result: undefined; error: unknown }
@@ -117,7 +121,7 @@ export class LuminaSDKImpl implements LuminaSDK {
     }
 
     const span: Span = {
-      id: spanId,
+      spanId,
       traceId: store.traceId,
       parentSpanId: store.spanId ?? null,
       name: startSpanBody.name,
@@ -130,41 +134,53 @@ export class LuminaSDKImpl implements LuminaSDK {
       input: startSpanBody.input as Record<string, unknown>,
       output: {},
       attributes: startSpanBody.attributes ?? {},
+      agentId: this.agentInstance.id,
+      sessionId: store.sessionId,
+      tags: store.tags,
     };
 
-    return this.als.run({ traceId: store.traceId, spanId, span }, async () => {
-      const run = async (): Promise<
-        { result: K; error: null } | { result: undefined; error: unknown }
-      > => {
-        try {
-          const result = await startSpanBody.callback(startSpanBody.input);
-          return { result, error: null };
-        } catch (err) {
-          return { result: undefined, error: err };
+    return this.als.run(
+      {
+        traceId: store.traceId,
+        spanId,
+        span,
+        sessionId: store.sessionId,
+        tags: store.tags,
+      },
+      async () => {
+        const run = async (): Promise<
+          { result: K; error: null } | { result: undefined; error: unknown }
+        > => {
+          try {
+            const result = await startSpanBody.callback(startSpanBody.input);
+            return { result, error: null };
+          } catch (err) {
+            return { result: undefined, error: err };
+          }
+        };
+
+        const { result, error: callbackError } = await run();
+        const endedAt = new Date();
+
+        // only overwrite on failure a success must not erase what
+        // recordError() set during the callback
+        if (callbackError) {
+          span.status = "error";
+          span.error =
+            callbackError instanceof Error
+              ? callbackError.message
+              : String(callbackError);
         }
-      };
+        span.endedAt = endedAt;
+        span.durationMs = endedAt.getTime() - startDate.getTime();
+        span.output = (result as Record<string, unknown>) ?? {};
 
-      const { result, error: callbackError } = await run();
-      const endedAt = new Date();
+        this.ingestBuffer.add(span);
 
-      // only overwrite on failure a success must not erase what
-      // recordError() set during the callback
-      if (callbackError) {
-        span.status = "error";
-        span.error =
-          callbackError instanceof Error
-            ? callbackError.message
-            : String(callbackError);
-      }
-      span.endedAt = endedAt;
-      span.durationMs = endedAt.getTime() - startDate.getTime();
-      span.output = (result as Record<string, unknown>) ?? {};
-
-      this.ingestBuffer.add(span);
-
-      if (callbackError) throw callbackError;
-      return result as K;
-    });
+        if (callbackError) throw callbackError;
+        return result as K;
+      },
+    );
   }
 
   addAttribute(key: string, value: unknown): void {

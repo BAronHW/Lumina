@@ -9,7 +9,7 @@ import java.time.OffsetDateTime
 import java.util.UUID
 
 case class Span(
-    id: UUID,
+    spanId: UUID,
     traceId: UUID,
     parentSpanId: Option[UUID],
     name: String,
