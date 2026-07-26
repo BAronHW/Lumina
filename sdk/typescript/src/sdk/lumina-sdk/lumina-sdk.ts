@@ -43,41 +43,68 @@ export class LuminaSDKImpl implements LuminaSDK {
     };
   }
 
+  /**
+   * 1. Create traceId, rootSpanId, startDate.
+   * 2. Build the root span (parentSpanId: null, carries name/agentId/sessionId/tags).
+   * 3. Seed ALS with the root span so child spans parent to it.
+   * 4. Run the callback (children create + buffer THEMSELVES via span()).
+   * 5. On finish: set rootSpan status/error/endedAt/output.
+   * 6. Push the root span to the ingest buffer — its parentSpanId:null + endedAt
+   *    is what signals the backend the trace is complete.
+   */
   async trace<T, K>(startTraceBody: StartTraceBody<T, K>): Promise<K> {
     const traceId = randomUUID();
+    const rootSpanId = randomUUID();
     const startDate = new Date();
-    const baseTrace = {
-      id: traceId,
-      agentId: this.agentInstance.id,
-      sessionId: startTraceBody.sessionId,
+
+    const rootSpan: Span = {
+      id: rootSpanId,
+      traceId: traceId,
+      parentSpanId: null,
       name: startTraceBody.name,
-      status: "ok" as SpanStatus,
+      kind: "Trace",
+      status: "ok",
+      error: null,
       startedAt: startDate,
-      tags: startTraceBody.tags ?? {},
+      endedAt: null,
+      durationMs: null,
+      input: startTraceBody.input as Record<string, unknown>,
+      output: {},
+      attributes: {},
     };
-    await this.httpClient.createTrace(baseTrace);
 
-    return this.als.run({ traceId, spanId: null, span: null }, async () => {
-      const run = async (): Promise<
-        { result: K; error: null } | { result: undefined; error: unknown }
-      > => {
-        try {
-          const result = await startTraceBody.callback(startTraceBody.input);
-          return { result, error: null };
-        } catch (err) {
-          return { result: undefined, error: err };
+    return this.als.run(
+      { traceId, spanId: rootSpanId, span: rootSpan },
+      async () => {
+        const run = async (): Promise<
+          { result: K; error: null } | { result: undefined; error: unknown }
+        > => {
+          try {
+            const result = await startTraceBody.callback(startTraceBody.input);
+            return { result, error: null };
+          } catch (err) {
+            return { result: undefined, error: err };
+          }
+        };
+
+        const { result, error } = await run();
+        const endedAt = new Date();
+
+        if (error) {
+          rootSpan.status = "error";
+          rootSpan.error =
+            error instanceof Error ? error.message : String(error);
         }
-      };
+        rootSpan.endedAt = endedAt;
+        rootSpan.durationMs = endedAt.getTime() - startDate.getTime();
+        rootSpan.output = (result as Record<string, unknown>) ?? {};
 
-      const { result, error: callbackError } = await run();
-      const status: SpanStatus = callbackError ? "error" : "ok";
-      const endedAt = new Date();
+        this.ingestBuffer.add(rootSpan);
 
-      await this.httpClient.updateTrace({ ...baseTrace, status, endedAt });
-
-      if (callbackError) throw callbackError;
-      return result as K;
-    });
+        if (error) throw error;
+        return result as K;
+      },
+    );
   }
 
   async span<T, K>(startSpanBody: StartSpanBody<T, K>): Promise<K> {
@@ -120,7 +147,7 @@ export class LuminaSDKImpl implements LuminaSDK {
       const { result, error: callbackError } = await run();
       const endedAt = new Date();
 
-      // only overwrite on failure — a success must not erase what
+      // only overwrite on failure a success must not erase what
       // recordError() set during the callback
       if (callbackError) {
         span.status = "error";
