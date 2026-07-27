@@ -47,7 +47,7 @@ object TraceAssemblyService {
         )
         tracesToCreate = items
           .groupBy(_.traceId)
-          .map { case (id, spans) =>
+          .map { case (_, spans) =>
             toTrace(spans.minBy(_.startedAt))
           }
           .toList
