@@ -39,18 +39,28 @@ object TraceService {
       override def updateTrace(traceBody: Trace): F[Completion] =
         logger.info(s"Updating trace: ${traceBody.id}") *> traceRepository.updateTrace(traceBody)
 
-      override def batchCreateTrace(traceBodyBatch: List[Trace]): F[Completion] =
-        logger.info(s"Batch creating ${traceBodyBatch.size} traces") *> traceRepository.batchCreateTraces(
-          traceBodyBatch
-        )
+      override def batchCreateTrace(traceBodyBatch: List[Trace]): F[Completion] = {
+        if (traceBodyBatch.isEmpty) {
+          Monad[F].pure(Completion.Insert(0))
+        } else {
+          logger.info(s"Batch creating ${traceBodyBatch.size} traces") *> traceRepository.batchCreateTraces(
+            traceBodyBatch
+          )
+        }
+      }
 
       override def batchUpdateTraces(traces: List[Trace]): F[Completion] =
         logger.info(s"Batch updating ${traces.size} traces") *> traceRepository.batchUpdateTraces(traces)
 
-      override def updateBatchTracesWithId(traceIds: List[UUID]): F[Completion] =
-        logger.info(s"Batch updating ${traceIds.size} traces by id") *> traceRepository.updateTraceBatchWithIds(
-          traceIds
-        )
+      override def updateBatchTracesWithId(traceIds: List[UUID]): F[Completion] = {
+        if (traceIds.isEmpty) {
+          Monad[F].pure(Completion.Update(0))
+        } else {
+          logger.info(s"Batch updating ${traceIds.size} traces by id") *> traceRepository.updateTraceBatchWithIds(
+            traceIds
+          )
+        }
+      }
 
       override def getAllTraces(pagination: Pagination): F[List[Trace]] =
         logger.info(s"Getting all traces with pagination") *> traceRepository.getAllTraces(pagination)

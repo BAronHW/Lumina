@@ -2,8 +2,9 @@ package com.example.lumina.services
 
 import cats.effect.Concurrent
 import cats.syntax.all.*
-import com.example.lumina.Domain.Span
+import com.example.lumina.Domain.{Span, Trace}
 import com.example.lumina.types.CreateSpanRequest
+import com.example.lumina.types.SpanStatus.Ok
 import org.typelevel.log4cats.Logger
 import skunk.data.Completion
 
@@ -14,10 +15,10 @@ trait TraceAssemblyService[F[_]] {
 
 object TraceAssemblyService {
   def impl[F[_]: Concurrent](
-    ingestBuffer: IngestBuffer[F, CreateSpanRequest],
-    spanService: SpanService[F],
-    traceService: TraceService[F],
-    logger: Logger[F]
+      ingestBuffer: IngestBuffer[F, CreateSpanRequest],
+      spanService: SpanService[F],
+      traceService: TraceService[F],
+      logger: Logger[F]
   ): TraceAssemblyService[F] = new TraceAssemblyService[F] {
 
     /** This function will take spans contained in the ingest buffer and then generate them using the span service. It
@@ -27,23 +28,30 @@ object TraceAssemblyService {
     override def processSpans(chunksToTake: Int): F[Boolean] =
       for {
         items <- ingestBuffer.tryTakeN(chunksToTake)
-        spans = items.map(elem => Span(
-          spanId = elem.spanId,
-          traceId = elem.traceId,
-          parentSpanId = elem.parentSpanId,
-          name = elem.name,
-          kind = elem.kind,
-          status = elem.status,
-          error = elem.error,
-          startedAt = elem.startedAt,
-          endedAt = elem.endedAt,
-          durationMs = elem.durationMs,
-          input = elem.input,
-          output = elem.output,
-          attributes = elem.attributes
-        ))
-        traceIds = spans.map(_.traceId).toSet
-//        _ <- traceService.batchCreateTrace()
+        spans = items.map(elem =>
+          Span(
+            spanId = elem.spanId,
+            traceId = elem.traceId,
+            parentSpanId = elem.parentSpanId,
+            name = elem.name,
+            kind = elem.kind,
+            status = elem.status,
+            error = elem.error,
+            startedAt = elem.startedAt,
+            endedAt = elem.endedAt,
+            durationMs = elem.durationMs,
+            input = elem.input,
+            output = elem.output,
+            attributes = elem.attributes
+          )
+        )
+        tracesToCreate = items
+          .groupBy(_.traceId)
+          .map { case (id, spans) =>
+            toTrace(spans.minBy(_.startedAt))
+          }
+          .toList
+        _ <- traceService.batchCreateTrace(tracesToCreate)
         _ <- logger.info(s"Processing ${items.size} spans from queue")
         result <-
           if (items.isEmpty) Concurrent[F].pure(false)
@@ -82,6 +90,20 @@ object TraceAssemblyService {
 
       logger.info(s"Updating ${traceIdList.size} completed traces") *>
         traceService.updateBatchTracesWithId(traceIdList).map(res => completionToBool(res))
+    }
+
+    def toTrace(createSpan: CreateSpanRequest): Trace = {
+      Trace(
+        id = createSpan.traceId,
+        agentId = createSpan.agentId,
+        sessionId = createSpan.sessionId,
+        name = "",
+        status = Ok,
+        startedAt = createSpan.startedAt,
+        endedAt = None,
+        totalCostUsd = None,
+        tags = Map.empty
+      )
     }
   }
 }

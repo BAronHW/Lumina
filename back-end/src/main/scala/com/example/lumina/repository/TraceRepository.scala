@@ -129,7 +129,7 @@ class TraceRepository[F[_]: Concurrent](session: Resource[F, Session[F]]) {
 
     def batchCreateTrace(traceList: List[Trace]): Command[traceList.type] = {
       val enc = traceCodec.list(traceList)
-      sql"INSERT INTO trace VALUES $enc".command
+      sql"INSERT INTO trace VALUES $enc ON CONFLICT (id) DO NOTHING".command
     }
 
     def batchUpdateTrace(traceList: List[Trace]): Command[traceList.type] = {
