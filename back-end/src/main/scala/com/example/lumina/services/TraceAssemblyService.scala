@@ -42,6 +42,8 @@ object TraceAssemblyService {
           output = elem.output,
           attributes = elem.attributes
         ))
+        traceIds = spans.map(_.traceId).toSet
+//        _ <- traceService.batchCreateTrace()
         _ <- logger.info(s"Processing ${items.size} spans from queue")
         result <-
           if (items.isEmpty) Concurrent[F].pure(false)
