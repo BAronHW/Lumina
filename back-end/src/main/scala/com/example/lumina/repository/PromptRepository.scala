@@ -41,17 +41,17 @@ class PromptRepository[F[_]: Concurrent](session: Resource[F, Session[F]]) {
     private val promptCodec: Codec[Prompt] = (uuid *: varchar *: varchar).to[Prompt]
 
     val createPrompt: Query[Prompt, Prompt] =
-      sql"INSERT INTO prompt (id, name, content) VALUES ${promptCodec.values} RETURNING id, name, content"
+      sql"INSERT INTO prompts (id, name, prompt) VALUES ${promptCodec.values} RETURNING id, name, prompt"
         .query(promptCodec)
 
     val deletePrompt: Command[UUID] =
-      sql"DELETE FROM prompt WHERE id = $uuid".command
+      sql"DELETE FROM prompts WHERE id = $uuid".command
 
     val selectPromptWithId: Query[UUID, Prompt] =
-      sql"SELECT * FROM prompt WHERE id = $uuid".query(promptCodec)
+      sql"SELECT id, name, prompt FROM prompts WHERE id = $uuid".query(promptCodec)
 
     val updatePrompt: Command[Prompt] =
-      sql"UPDATE prompt SET name = $varchar, content = $varchar WHERE id = $uuid".command.contramap[Prompt] { p =>
+      sql"UPDATE prompts SET name = $varchar, prompt = $varchar WHERE id = $uuid".command.contramap[Prompt] { p =>
         p.name *: p.prompt *: p.id *: EmptyTuple
       }
   }

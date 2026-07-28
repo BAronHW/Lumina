@@ -22,20 +22,20 @@ object PromptRoutes {
     import dsl.*
 
     HttpRoutes.of[F] {
-      case GET -> Root / "prompt" / UUIDVar(id) =>
+      case GET -> Root / "prompts" / UUIDVar(id) =>
         promptService.getPrompt(id).flatMap {
           case Some(prompt) => Ok(prompt)
           case None         => NotFound()
         }
 
-      case req @ POST -> Root / "prompt" =>
+      case req @ POST -> Root / "prompts" =>
         for {
           body <- req.as[CreatePromptRequest]
           prompt <- promptService.createPrompt(body.name, body.content)
           resp <- Created(prompt)
         } yield resp
 
-      case req @ PUT -> Root / "prompt" / UUIDVar(id) =>
+      case req @ PUT -> Root / "prompts" / UUIDVar(id) =>
         for {
           body <- req.as[UpdatePromptRequest]
           result <- promptService.updatePrompt(Prompt(id, body.name, body.content))
@@ -45,7 +45,7 @@ object PromptRoutes {
           }
         } yield resp
 
-      case DELETE -> Root / "prompt" / UUIDVar(id) =>
+      case DELETE -> Root / "prompts" / UUIDVar(id) =>
         promptService.deletePrompt(id).flatMap {
           case Completion.Delete(n) if n > 0 => Ok()
           case _                             => NotFound()
