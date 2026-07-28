@@ -224,9 +224,11 @@ export class LuminaHttpClientImpl implements LuminaHttpClient {
   }
 
   async ingestSpans(spans: Span[]): Promise<void> {
-    await this.requestVoid("POST", "/ingest/spans", {
-      spans: spans.map((s) => this.serializeSpan(s)),
-    });
+    await this.requestVoid(
+      "POST",
+      "/ingest/spans",
+      spans.map((s) => this.serializeSpan(s)),
+    );
   }
 
   async createPrompt(name: string, content: string): Promise<Prompt> {
