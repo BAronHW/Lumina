@@ -232,18 +232,18 @@ export class LuminaHttpClientImpl implements LuminaHttpClient {
   }
 
   async createPrompt(name: string, content: string): Promise<Prompt> {
-    return this.requestJson<Prompt>("POST", "/prompt", { name, content });
+    return this.requestJson<Prompt>("POST", "/prompts", { name, content });
   }
 
   async getPrompt(id: UUID): Promise<Prompt | null> {
-    return this.requestNullable<Prompt>(`/prompt/${id}`);
+    return this.requestNullable<Prompt>(`/prompts/${id}`);
   }
 
   async updatePrompt(id: UUID, name: string, content: string): Promise<void> {
-    await this.requestVoid("PUT", `/prompt/${id}`, { name, content });
+    await this.requestVoid("PUT", `/prompts/${id}`, { name, content });
   }
 
   async deletePrompt(id: UUID): Promise<void> {
-    await this.requestVoid("DELETE", `/prompt/${id}`);
+    await this.requestVoid("DELETE", `/prompts/${id}`);
   }
 }
