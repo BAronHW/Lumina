@@ -28,5 +28,6 @@ libraryDependencies ++= Seq(
   "org.tpolecat" %% "skunk-circe" % skunkVersion,
   "org.tpolecat" %% "natchez-noop" % "0.3.10",
   "org.scalameta" %% "munit" % "1.3.2",
-  "com.github.pureconfig" %% "pureconfig-core" % "0.17.10"
+  "com.github.pureconfig" %% "pureconfig-core" % "0.17.10",
+  "org.scalatest" %% "scalatest" % "3.2.19"
 )
