@@ -4,6 +4,7 @@ import cats.effect.Temporal
 import cats.syntax.all.*
 import com.example.lumina.types.WorkerConfig
 import fs2.Stream
+import org.typelevel.log4cats.Logger
 
 import scala.concurrent.duration.*
 
@@ -16,12 +17,19 @@ trait SpanQueueWorker[F[_]] {
 object SpanQueueWorker {
   def impl[F[_]: Temporal](
       traceAssemblyService: TraceAssemblyService[F],
-      workerConfig: WorkerConfig
+      workerConfig: WorkerConfig,
+      logger: Logger[F]
   ): SpanQueueWorker[F] = new SpanQueueWorker[F] {
     override def stream: Stream[F, Unit] =
       Stream
         .awakeEvery[F](workerConfig.pollInterval.millis)
-        .evalMap(_ => traceAssemblyService.processSpans(workerConfig.chunkSize))
+        .evalMap(_ =>
+          traceAssemblyService
+            .processSpans(workerConfig.chunkSize)
+            .handleErrorWith(error =>
+              logger.error(s"SpanQueueWorker cycle failed here ${error.toString}") *> Temporal[F].pure(false)
+            )
+        )
         .void
   }
 }
