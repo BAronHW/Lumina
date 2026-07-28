@@ -133,13 +133,15 @@ class TraceRepository[F[_]: Concurrent](session: Resource[F, Session[F]]) {
     }
 
     def batchUpdateTrace(traceList: List[Trace]): Command[traceList.type] = {
-      val enc = (uuid *: timestamptz.opt *: spanStatusCodec)
-        .contramap[Trace](t => t.id *: t.endedAt *: t.status *: EmptyTuple)
+      val enc = (uuid *: varchar *: spanStatusCodec *: timestamptz *: timestamptz.opt)
+        .contramap[Trace](t => t.id *: t.name *: t.status *: t.startedAt *: t.endedAt *: EmptyTuple)
         .list(traceList)
       sql"""UPDATE trace
-              SET ended_at = v.ended_at,
-                  status   = v.status::span_status
-              FROM (VALUES $enc) AS v(id, ended_at, status)
+              SET name       = v.name,
+                  status     = v.status::span_status,
+                  started_at = v.started_at,
+                  ended_at   = v.ended_at
+              FROM (VALUES $enc) AS v(id, name, status, started_at, ended_at)
              WHERE trace.id = v.id::uuid""".command
     }
 

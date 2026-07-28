@@ -45,12 +45,14 @@ object TraceAssemblyService {
             attributes = elem.attributes
           )
         )
+
         tracesToCreate = items
           .groupBy(_.traceId)
           .map { case (_, spans) =>
             toTrace(spans.minBy(_.startedAt))
           }
           .toList
+
         _ <- traceService.batchCreateTrace(tracesToCreate)
         _ <- logger.info(s"Processing ${items.size} spans from queue")
         result <-
@@ -82,15 +84,31 @@ object TraceAssemblyService {
       * and then turn them into a list
       */
     def updateCompletedTrace(spanList: List[CreateSpanRequest]): F[Boolean] = {
-      val traceIdList = spanList
+      val rootSpans = spanList
         .filter(elem => elem.parentSpanId.isEmpty && elem.endedAt.isDefined)
-        .groupBy(elem => elem.traceId)
-        .keys
+        .groupBy(_.traceId)
+        .values
+        .map(elem => elem.minBy(_.startedAt))
         .toList
 
-      logger.info(s"Updating ${traceIdList.size} completed traces") *>
-        traceService.updateBatchTracesWithId(traceIdList).map(res => completionToBool(res))
+      if (rootSpans.isEmpty) Concurrent[F].pure(false)
+      else
+        logger.info(s"Updating ${rootSpans.size} completed traces") *>
+          traceService.batchUpdateTraces(rootSpans.map(toFinalizationTrace)).map(res => completionToBool(res))
     }
+
+    def toFinalizationTrace(rootSpan: CreateSpanRequest): Trace =
+      Trace(
+        id = rootSpan.traceId,
+        agentId = rootSpan.agentId,
+        sessionId = rootSpan.sessionId,
+        name = rootSpan.name,
+        status = rootSpan.status,
+        startedAt = rootSpan.startedAt,
+        endedAt = rootSpan.endedAt,
+        totalCostUsd = None,
+        tags = Map.empty
+      )
 
     def toTrace(createSpan: CreateSpanRequest): Trace = {
       Trace(
