@@ -24,6 +24,7 @@ import com.example.lumina.services.{
   SessionService,
   SpanQueueWorker,
   SpanService,
+  StaleTraceWorker,
   TraceAssemblyService,
   TraceService
 }

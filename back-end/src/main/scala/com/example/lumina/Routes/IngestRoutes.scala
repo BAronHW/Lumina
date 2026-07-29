@@ -15,13 +15,14 @@ object IngestRoutes {
     val dsl = new Http4sDsl[F] {}
     import dsl.*
 
-    HttpRoutes.of[F] { case req @ POST -> Root / "ingest" / "spans" =>
-      for {
-        body <- req.as[List[CreateSpanRequest]]
-        _ <- ingestService.pushSpans(body)
-        resp <- Accepted()
-      } yield resp
-    }
+    HttpRoutes
+      .of[F] { case req @ POST -> Root / "ingest" / "spans" =>
+        for {
+          body <- req.as[List[CreateSpanRequest]]
+          _ <- ingestService.pushSpans(body)
+          resp <- Accepted()
+        } yield resp
+      }
   }
 
 }
