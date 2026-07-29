@@ -7,8 +7,26 @@ import cats.effect.syntax.all.*
 import cats.effect.std.{Console, Queue}
 import com.comcast.ip4s.*
 import com.example.lumina.DB.DataBaseConnection
-import com.example.lumina.repository.{AgentRepository, DeploymentRepository, PromptRepository, SessionRepository, SpanRepository, TraceRepository}
-import com.example.lumina.services.{AgentService, DeploymentService, IngestBuffer, IngestService, PromptService, SessionService, SpanQueueWorker, SpanService, TraceAssemblyService, TraceService}
+import com.example.lumina.repository.{
+  AgentRepository,
+  DeploymentRepository,
+  PromptRepository,
+  SessionRepository,
+  SpanRepository,
+  TraceRepository
+}
+import com.example.lumina.services.{
+  AgentService,
+  DeploymentService,
+  IngestBuffer,
+  IngestService,
+  PromptService,
+  SessionService,
+  SpanQueueWorker,
+  SpanService,
+  TraceAssemblyService,
+  TraceService
+}
 import com.example.lumina.types.{Config, CreateSpanRequest, WorkerConfig}
 import fs2.io.net.Network
 import org.http4s.ember.server.EmberServerBuilder
@@ -61,7 +79,7 @@ object LuminaServer:
       deploymentService = DeploymentService.impl[F](deploymentRepository, logger)
       ingestService = IngestService.impl[F](ingestBuffer, logger)
       promptService = PromptService.impl[F](promptRepository, logger)
-      spanQueueWorker = SpanQueueWorker.impl[F](traceAssemblyService, workerConf)
+      spanQueueWorker = SpanQueueWorker.impl[F](traceAssemblyService, workerConf, logger)
       _ <- spanQueueWorker.stream.compile.drain.background
 
       httpApp = ControllerErrorHandler
