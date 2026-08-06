@@ -24,7 +24,6 @@ import com.example.lumina.services.{
   SessionService,
   SpanQueueWorker,
   SpanService,
-  StaleTraceWorker,
   TraceAssemblyService,
   TraceService
 }
@@ -84,7 +83,7 @@ object LuminaServer:
       _ <- spanQueueWorker.stream.compile.drain.background
 
       httpApp = ControllerErrorHandler
-        .handleRouteErrors(
+        .handleRouteErrorsMiddleware(
           AgentRoutes.agentRoutes[F](agentService) <+>
             DeploymentRoutes.deploymentRoutes[F](deploymentService) <+>
             IngestRoutes.ingestRoutes[F](ingestService) <+>

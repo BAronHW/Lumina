@@ -27,7 +27,7 @@ object SpanQueueWorker {
           traceAssemblyService
             .processSpans(workerConfig.chunkSize)
             .handleErrorWith(error =>
-              logger.error(s"SpanQueueWorker cycle failed here ${error.toString}") *> Temporal[F].pure(false)
+              logger.error(error)("SpanQueueWorker cycle failed") *> Temporal[F].pure(false)
             )
         )
         .void

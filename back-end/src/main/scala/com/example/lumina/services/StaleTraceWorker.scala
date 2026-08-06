@@ -8,7 +8,6 @@ import scala.concurrent.duration.FiniteDuration
 
 trait StaleTraceWorker[F[_]] {
   def clearStaleTraces(): Stream[F, Unit]
-  def clearStaleTracesAndSpans(): F[Completion]
 }
 
 object StaleTraceWorker {
@@ -25,13 +24,13 @@ object StaleTraceWorker {
           this
             .clearStaleTracesAndSpans()
             .handleErrorWith(err =>
-              logger.error(s"StaleTraceWorker failed with ${err.getMessage}") *> Temporal[F].pure(Completion.Update(0))
+              logger.error(err)("StaleTraceWorker failed") *> Temporal[F].pure(Completion.Update(0))
             )
         )
         .void
     }
 
-    override def clearStaleTracesAndSpans(): F[Completion] = {
+    def clearStaleTracesAndSpans(): F[Completion] = {
       traceService.timeoutStaleTraces() *> spanService.timeoutStaleSpan()
     }
   }

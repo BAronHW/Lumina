@@ -3,7 +3,7 @@ package com.example.lumina.Routes.Helper
 import cats.data.{Kleisli, OptionT}
 import cats.effect.Concurrent
 import cats.syntax.all.*
-import org.http4s.{HttpRoutes, Request, Response}
+import org.http4s.{HttpRoutes, MessageFailure, Request, Response}
 import org.http4s.dsl.Http4sDsl
 import skunk.exception.PostgresErrorException
 
@@ -20,13 +20,14 @@ object ControllerErrorHandler {
     }
   }
 
-  def handleRouteErrors[F[_]: Concurrent](routes: HttpRoutes[F]): HttpRoutes[F] = {
+  def handleRouteErrorsMiddleware[F[_]: Concurrent](routes: HttpRoutes[F]): HttpRoutes[F] = {
     val dsl = new Http4sDsl[F] {}
     import dsl.*
     Kleisli { (req: Request[F]) =>
       OptionT(
         routes.run(req).value.handleErrorWith {
           case e: PostgresErrorException => handlePostgresError(e).map(Some(_))
+          case e: MessageFailure         => BadRequest("Error with HTTP message").map(Some(_))
           case _                         => InternalServerError().map(Some(_))
         }
       )
