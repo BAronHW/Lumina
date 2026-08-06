@@ -22,7 +22,7 @@ object DeploymentRoutes:
     val dsl = new Http4sDsl[F] {}
     import dsl.*
 
-    object PageMatcher extends QueryParamDecoderMatcher[Int]("page")
+    object PageMatcher extends OptionalQueryParamDecoderMatcher[Int]("page")
     object PageSizeMatcher extends OptionalQueryParamDecoderMatcher[Int]("pageSize")
     HttpRoutes.of[F] {
       case GET -> Root / "deployments" / UUIDVar(id) =>
@@ -56,7 +56,7 @@ object DeploymentRoutes:
 
       case GET -> Root / "deployments" :? PageMatcher(page) +& PageSizeMatcher(pageSize) =>
         for {
-          result <- service.getAllDeployment(Pagination(page, pageSize.getOrElse(20)))
+          result <- service.getAllDeployment(Pagination(page.getOrElse(1), pageSize.getOrElse(20)))
           resp <- Ok(result)
         } yield resp
     }

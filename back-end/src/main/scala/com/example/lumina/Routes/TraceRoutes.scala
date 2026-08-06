@@ -46,7 +46,7 @@ object TraceRoutes {
   def traceRoutes[F[_]: Concurrent](traceService: TraceService[F]): HttpRoutes[F] = {
     val dsl = new Http4sDsl[F] {}
     import dsl.*
-    object PageMatcher extends QueryParamDecoderMatcher[Int]("page")
+    object PageMatcher extends OptionalQueryParamDecoderMatcher[Int]("page")
     object PageSizeMatcher extends OptionalQueryParamDecoderMatcher[Int]("pageSize")
 
     HttpRoutes.of[F] {
@@ -118,13 +118,13 @@ object TraceRoutes {
         } yield resp
 
       case GET -> Root / "traces" :? PageMatcher(page) +& PageSizeMatcher(pageSize) =>
-        traceService.getAllTraces(Pagination(page, pageSize.getOrElse(20))).flatMap(traces => Ok(traces))
+        traceService.getAllTraces(Pagination(page.getOrElse(1), pageSize.getOrElse(20))).flatMap(traces => Ok(traces))
 
       case GET -> Root / "agents" / UUIDVar(agentId) / "traces" =>
         traceService.getTracesByAgentId(agentId).flatMap(traces => Ok(traces))
 
       case GET -> Root / "traces" / "finished" :? PageMatcher(page) +& PageSizeMatcher(pageSize) =>
-        traceService.getAllFinishedTraces(Pagination(page, pageSize.getOrElse(20))).flatMap(traces => Ok(traces))
+        traceService.getAllFinishedTraces(Pagination(page.getOrElse(1), pageSize.getOrElse(20))).flatMap(traces => Ok(traces))
     }
   }
 

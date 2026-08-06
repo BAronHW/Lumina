@@ -24,10 +24,11 @@ import com.example.lumina.services.{
   SessionService,
   SpanQueueWorker,
   SpanService,
+  StaleTraceWorker,
   TraceAssemblyService,
   TraceService
 }
-import com.example.lumina.types.{Config, CreateSpanRequest, WorkerConfig}
+import com.example.lumina.types.{Config, CreateSpanRequest, WorkerConfig, StaleTraceConfig}
 import fs2.io.net.Network
 import org.http4s.ember.server.EmberServerBuilder
 import org.http4s.implicits.*
@@ -56,6 +57,15 @@ object LuminaServer:
             .map(e => new RuntimeException(e.prettyPrint()))
         )
       )
+      staleTraceWorkerConf <- Resource.eval(
+        Async[F].fromEither(
+          ConfigSource.default
+            .at("lumina.stale")
+            .load[StaleTraceConfig]
+            .left
+            .map(e => new RuntimeException(e.prettyPrint()))
+        )
+      )
       pooled <- DataBaseConnection.pooled(conf)
       queue <- Resource.eval(Queue.bounded[F, CreateSpanRequest](256))
       logger = LoggerFactory[F].getLogger
@@ -80,7 +90,9 @@ object LuminaServer:
       ingestService = IngestService.impl[F](ingestBuffer, logger)
       promptService = PromptService.impl[F](promptRepository, logger)
       spanQueueWorker = SpanQueueWorker.impl[F](traceAssemblyService, workerConf, logger)
+      staleTraceWorker = StaleTraceWorker.impl[F](traceService, spanService, staleTraceWorkerConf, logger)
       _ <- spanQueueWorker.stream.compile.drain.background
+      _ <- staleTraceWorker.clearStaleTraces().compile.drain.background
 
       httpApp = ControllerErrorHandler
         .handleRouteErrorsMiddleware(
@@ -94,7 +106,7 @@ object LuminaServer:
         )
         .orNotFound
 
-      finalHttpApp = Logger.httpApp(true, true)(httpApp)
+      finalHttpApp = Logger.httpApp(true, false)(httpApp)
       _ <-
         EmberServerBuilder
           .default[F]

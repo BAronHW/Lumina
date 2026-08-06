@@ -13,7 +13,7 @@ object SpanRoutes {
   def spanRoutes[F[_]: Concurrent](spanService: SpanService[F]): HttpRoutes[F] = {
     val dsl = new Http4sDsl[F] {}
     import dsl.*
-    object PageMatcher extends QueryParamDecoderMatcher[Int]("page")
+    object PageMatcher extends OptionalQueryParamDecoderMatcher[Int]("page")
     object PageSizeMatcher extends OptionalQueryParamDecoderMatcher[Int]("pageSize")
 
     HttpRoutes.of[F] {
@@ -24,7 +24,7 @@ object SpanRoutes {
         }
 
       case GET -> Root / "spans" :? PageMatcher(page) +& PageSizeMatcher(pageSize) =>
-        spanService.getAllSpan(Pagination(page, pageSize.getOrElse(20))).flatMap(spans => Ok(spans))
+        spanService.getAllSpan(Pagination(page.getOrElse(1), pageSize.getOrElse(20))).flatMap(spans => Ok(spans))
     }
   }
 

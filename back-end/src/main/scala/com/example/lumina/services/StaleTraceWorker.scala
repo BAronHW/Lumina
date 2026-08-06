@@ -4,7 +4,7 @@ import cats.effect.Temporal
 import org.typelevel.log4cats.Logger
 import fs2.Stream
 import skunk.data.Completion
-import scala.concurrent.duration.FiniteDuration
+import com.example.lumina.types.StaleTraceConfig
 
 trait StaleTraceWorker[F[_]] {
   def clearStaleTraces(): Stream[F, Unit]
@@ -14,12 +14,12 @@ object StaleTraceWorker {
   def impl[F[_]: Temporal](
       traceService: TraceService[F],
       spanService: SpanService[F],
-      pollInterval: FiniteDuration,
+      staleTraceWorkerConf: StaleTraceConfig,
       logger: Logger[F]
   ): StaleTraceWorker[F] = new StaleTraceWorker[F] {
     override def clearStaleTraces(): Stream[F, Unit] = {
       Stream
-        .awakeEvery[F](pollInterval)
+        .awakeEvery[F](staleTraceWorkerConf.pollInterval)
         .evalMap(_ =>
           this
             .clearStaleTracesAndSpans()
