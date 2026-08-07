@@ -1,0 +1,7 @@
+packages:
+  - "front-end"
+  - "sdk/typescript"
+
+allowBuilds:
+  '0': esbuild
+  esbuild: false
