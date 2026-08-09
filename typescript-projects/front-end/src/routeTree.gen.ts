@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AgentsIndexRouteImport } from './routes/agents/index'
 import { Route as ProjectsIndexRouteImport } from './routes/projects/index'
+import { Route as TestIndexRouteImport } from './routes/test/index'
 import { Route as TracesIndexRouteImport } from './routes/traces/index'
 
 const IndexRoute = IndexRouteImport.update({
@@ -29,6 +30,11 @@ const ProjectsIndexRoute = ProjectsIndexRouteImport.update({
   path: '/projects/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TestIndexRoute = TestIndexRouteImport.update({
+  id: '/test/',
+  path: '/test/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TracesIndexRoute = TracesIndexRouteImport.update({
   id: '/traces/',
   path: '/traces/',
@@ -39,12 +45,14 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/agents/': typeof AgentsIndexRoute
   '/projects/': typeof ProjectsIndexRoute
+  '/test/': typeof TestIndexRoute
   '/traces/': typeof TracesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/agents': typeof AgentsIndexRoute
   '/projects': typeof ProjectsIndexRoute
+  '/test': typeof TestIndexRoute
   '/traces': typeof TracesIndexRoute
 }
 export interface FileRoutesById {
@@ -52,20 +60,22 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/agents/': typeof AgentsIndexRoute
   '/projects/': typeof ProjectsIndexRoute
+  '/test/': typeof TestIndexRoute
   '/traces/': typeof TracesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/agents/' | '/projects/' | '/traces/'
+  fullPaths: '/' | '/agents/' | '/projects/' | '/test/' | '/traces/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/agents' | '/projects' | '/traces'
-  id: '__root__' | '/' | '/agents/' | '/projects/' | '/traces/'
+  to: '/' | '/agents' | '/projects' | '/test' | '/traces'
+  id: '__root__' | '/' | '/agents/' | '/projects/' | '/test/' | '/traces/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AgentsIndexRoute: typeof AgentsIndexRoute
   ProjectsIndexRoute: typeof ProjectsIndexRoute
+  TestIndexRoute: typeof TestIndexRoute
   TracesIndexRoute: typeof TracesIndexRoute
 }
 
@@ -92,6 +102,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProjectsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/test/': {
+      id: '/test/'
+      path: '/test'
+      fullPath: '/test/'
+      preLoaderRoute: typeof TestIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/traces/': {
       id: '/traces/'
       path: '/traces'
@@ -106,6 +123,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AgentsIndexRoute: AgentsIndexRoute,
   ProjectsIndexRoute: ProjectsIndexRoute,
+  TestIndexRoute: TestIndexRoute,
   TracesIndexRoute: TracesIndexRoute,
 }
 export const routeTree = rootRouteImport
