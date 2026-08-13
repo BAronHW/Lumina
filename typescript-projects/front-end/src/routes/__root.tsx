@@ -1,5 +1,6 @@
-import { createRootRoute, Link, Outlet } from '@tanstack/react-router'
+import { createRootRoute } from '@tanstack/react-router'
 import { MantineProvider } from '@mantine/core'
+import HomePage from '../HomePage'
 
 export const Route = createRootRoute({
   notFoundComponent: () => (
@@ -10,16 +11,7 @@ export const Route = createRootRoute({
   ),
   component: () => (
     <MantineProvider>
-      <nav style={{ display: 'flex', gap: '1rem', padding: '1rem', borderBottom: '1px solid #eee' }}>
-        <Link to="/traces">Traces</Link>
-        <Link to="/sessions">Sessions</Link>
-        <Link to="/costs">Costs</Link>
-        <Link to="/evals">Evals</Link>
-        <Link to="/prompts">Prompts</Link>
-      </nav>
-      <main style={{ padding: '2rem' }}>
-        <Outlet />
-      </main>
+      <HomePage />
     </MantineProvider>
   ),
 })

@@ -10,9 +10,10 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AgentsIndexRouteImport } from './routes/agents/index'
-import { Route as ProjectsIndexRouteImport } from './routes/projects/index'
-import { Route as TestIndexRouteImport } from './routes/test/index'
+import { Route as CostsIndexRouteImport } from './routes/costs/index'
+import { Route as EvalsIndexRouteImport } from './routes/evals/index'
+import { Route as PromptsIndexRouteImport } from './routes/prompts/index'
+import { Route as SessionsIndexRouteImport } from './routes/sessions/index'
 import { Route as TracesIndexRouteImport } from './routes/traces/index'
 
 const IndexRoute = IndexRouteImport.update({
@@ -20,19 +21,24 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AgentsIndexRoute = AgentsIndexRouteImport.update({
-  id: '/agents/',
-  path: '/agents/',
+const CostsIndexRoute = CostsIndexRouteImport.update({
+  id: '/costs/',
+  path: '/costs/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ProjectsIndexRoute = ProjectsIndexRouteImport.update({
-  id: '/projects/',
-  path: '/projects/',
+const EvalsIndexRoute = EvalsIndexRouteImport.update({
+  id: '/evals/',
+  path: '/evals/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const TestIndexRoute = TestIndexRouteImport.update({
-  id: '/test/',
-  path: '/test/',
+const PromptsIndexRoute = PromptsIndexRouteImport.update({
+  id: '/prompts/',
+  path: '/prompts/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SessionsIndexRoute = SessionsIndexRouteImport.update({
+  id: '/sessions/',
+  path: '/sessions/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TracesIndexRoute = TracesIndexRouteImport.update({
@@ -43,39 +49,51 @@ const TracesIndexRoute = TracesIndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/agents/': typeof AgentsIndexRoute
-  '/projects/': typeof ProjectsIndexRoute
-  '/test/': typeof TestIndexRoute
+  '/costs/': typeof CostsIndexRoute
+  '/evals/': typeof EvalsIndexRoute
+  '/prompts/': typeof PromptsIndexRoute
+  '/sessions/': typeof SessionsIndexRoute
   '/traces/': typeof TracesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/agents': typeof AgentsIndexRoute
-  '/projects': typeof ProjectsIndexRoute
-  '/test': typeof TestIndexRoute
+  '/costs': typeof CostsIndexRoute
+  '/evals': typeof EvalsIndexRoute
+  '/prompts': typeof PromptsIndexRoute
+  '/sessions': typeof SessionsIndexRoute
   '/traces': typeof TracesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/agents/': typeof AgentsIndexRoute
-  '/projects/': typeof ProjectsIndexRoute
-  '/test/': typeof TestIndexRoute
+  '/costs/': typeof CostsIndexRoute
+  '/evals/': typeof EvalsIndexRoute
+  '/prompts/': typeof PromptsIndexRoute
+  '/sessions/': typeof SessionsIndexRoute
   '/traces/': typeof TracesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/agents/' | '/projects/' | '/test/' | '/traces/'
+  fullPaths:
+    '/' | '/costs/' | '/evals/' | '/prompts/' | '/sessions/' | '/traces/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/agents' | '/projects' | '/test' | '/traces'
-  id: '__root__' | '/' | '/agents/' | '/projects/' | '/test/' | '/traces/'
+  to: '/' | '/costs' | '/evals' | '/prompts' | '/sessions' | '/traces'
+  id:
+    | '__root__'
+    | '/'
+    | '/costs/'
+    | '/evals/'
+    | '/prompts/'
+    | '/sessions/'
+    | '/traces/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AgentsIndexRoute: typeof AgentsIndexRoute
-  ProjectsIndexRoute: typeof ProjectsIndexRoute
-  TestIndexRoute: typeof TestIndexRoute
+  CostsIndexRoute: typeof CostsIndexRoute
+  EvalsIndexRoute: typeof EvalsIndexRoute
+  PromptsIndexRoute: typeof PromptsIndexRoute
+  SessionsIndexRoute: typeof SessionsIndexRoute
   TracesIndexRoute: typeof TracesIndexRoute
 }
 
@@ -88,25 +106,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/agents/': {
-      id: '/agents/'
-      path: '/agents'
-      fullPath: '/agents/'
-      preLoaderRoute: typeof AgentsIndexRouteImport
+    '/costs/': {
+      id: '/costs/'
+      path: '/costs'
+      fullPath: '/costs/'
+      preLoaderRoute: typeof CostsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/projects/': {
-      id: '/projects/'
-      path: '/projects'
-      fullPath: '/projects/'
-      preLoaderRoute: typeof ProjectsIndexRouteImport
+    '/evals/': {
+      id: '/evals/'
+      path: '/evals'
+      fullPath: '/evals/'
+      preLoaderRoute: typeof EvalsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/test/': {
-      id: '/test/'
-      path: '/test'
-      fullPath: '/test/'
-      preLoaderRoute: typeof TestIndexRouteImport
+    '/prompts/': {
+      id: '/prompts/'
+      path: '/prompts'
+      fullPath: '/prompts/'
+      preLoaderRoute: typeof PromptsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sessions/': {
+      id: '/sessions/'
+      path: '/sessions'
+      fullPath: '/sessions/'
+      preLoaderRoute: typeof SessionsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/traces/': {
@@ -121,9 +146,10 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AgentsIndexRoute: AgentsIndexRoute,
-  ProjectsIndexRoute: ProjectsIndexRoute,
-  TestIndexRoute: TestIndexRoute,
+  CostsIndexRoute: CostsIndexRoute,
+  EvalsIndexRoute: EvalsIndexRoute,
+  PromptsIndexRoute: PromptsIndexRoute,
+  SessionsIndexRoute: SessionsIndexRoute,
   TracesIndexRoute: TracesIndexRoute,
 }
 export const routeTree = rootRouteImport
