@@ -2,6 +2,7 @@ import { AppShell, Burger, Group, Stack } from "@mantine/core";
 import { useDisclosure } from '@mantine/hooks';
 import { Link, Outlet } from '@tanstack/react-router';
 import styles from './HomePage.module.css';
+import Navbar from "./components/Navbar";
 
 
 export default function HomePage() {
@@ -31,11 +32,13 @@ export default function HomePage() {
       <AppShell.Navbar p="md">
         <AppShell.Section grow>
           <Stack gap="xs">
-            <Link to="/traces">Traces</Link>
-            <Link to="/sessions">Sessions</Link>
-            <Link to="/costs">Costs</Link>
-            <Link to="/evals">Evals</Link>
-            <Link to="/prompts">Prompts</Link>
+            <Navbar links={[
+              { href: '/traces', title: 'Traces' },
+              { href: '/sessions', title: 'Session' },
+              { href: '/costs', title: 'Costs' },
+              { href: '/evals', title: 'Evals' },
+              { href: '/prompts', title: 'Prompts' }
+            ]}/>
           </Stack>
         </AppShell.Section>
       </AppShell.Navbar>
