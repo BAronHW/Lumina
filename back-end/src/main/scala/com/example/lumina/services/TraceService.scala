@@ -50,7 +50,8 @@ object TraceService {
       }
 
       override def batchUpdateTraces(traces: List[Trace]): F[Completion] =
-        logger.info(s"Batch updating ${traces.size} traces") *> traceRepository.batchUpdateTraces(traces)
+        if (traces.isEmpty) Monad[F].pure(Completion.Update(0))
+        else logger.info(s"Batch updating ${traces.size} traces") *> traceRepository.batchUpdateTraces(traces)
 
       override def updateBatchTracesWithId(traceIds: List[UUID]): F[Completion] = {
         if (traceIds.isEmpty) {
