@@ -6,7 +6,10 @@ import { tanstackRouter } from '@tanstack/router-plugin/vite'
 export default defineConfig({
   server: {
     proxy: {
-      '/api': 'http://localhost:8080',
+      '/api': {
+        target: 'http://localhost:8080',
+        rewrite: (path) => path.replace(/^\/api/, ''),
+      },
     }
   },
   plugins: [
