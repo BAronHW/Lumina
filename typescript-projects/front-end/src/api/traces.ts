@@ -1,3 +1,4 @@
+import type { Trace } from "@lumina/sdk";
 import { useQuery } from "@tanstack/react-query";
 
 export function useTraces(page?: number, pageSize?: number) {
@@ -6,7 +7,7 @@ export function useTraces(page?: number, pageSize?: number) {
     if (pageSize !== undefined) params.set('pageSize', pageSize.toString());
     const query = params.toString();
 
-    return useQuery({
+    return useQuery<Trace[]>({
         queryKey: ['traces', { page, pageSize }],
         queryFn: () => fetch(`/api/traces${query ? `?${query}` : ''}`).then((res) => res.json())
     })
