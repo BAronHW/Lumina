@@ -1,6 +1,7 @@
 package com.example.lumina.Routes
 
 import com.example.lumina.Domain.Trace.given
+import com.example.lumina.Domain.TracesPage.given
 import com.example.lumina.Domain.TraceWithSpans.given
 import cats.effect.Concurrent
 import cats.syntax.all.*
@@ -118,7 +119,7 @@ object TraceRoutes {
         } yield resp
 
       case GET -> Root / "traces" :? PageMatcher(page) +& PageSizeMatcher(pageSize) =>
-        traceService.getAllTraces(Pagination(page.getOrElse(1), pageSize.getOrElse(20))).flatMap(traces => Ok(traces))
+        traceService.getTracesPage(Pagination(page.getOrElse(1), pageSize.getOrElse(20))).flatMap(page => Ok(page))
 
       case GET -> Root / "agents" / UUIDVar(agentId) / "traces" =>
         traceService.getTracesByAgentId(agentId).flatMap(traces => Ok(traces))

@@ -33,10 +33,10 @@ function TracesPage() {
       <Stack align="center" gap="md">
         <GenericTable<Trace>
           columns={columns}
-          rows={data ?? []}
+          rows={data?.items ?? []}
           getRowKey={(row) => row.id}
         />
-        <Pagination total={10} value={page} onChange={setPage} />
+        <Pagination total={Math.ceil((data?.total ?? 0) / 25)} value={page} onChange={setPage} />
       </Stack>
     </Container>
   )

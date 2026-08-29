@@ -40,6 +40,11 @@ class TraceRepository[F[_]: Concurrent](session: Resource[F, Session[F]]) {
       s.prepare(TraceRepositoryQueries.selectAllTraces).flatMap(ps => ps.stream(pagination, 64).compile.toList)
     }
 
+  def countTraces(): F[Long] =
+    session.use { s =>
+      s.unique(TraceRepositoryQueries.countTraces)
+    }
+
   def batchCreateTraces(traces: List[Trace]): F[Completion] = {
     session.use { s =>
       s.prepare(TraceRepositoryQueries.batchCreateTrace(traces)).flatMap(ps => ps.execute(traces))
@@ -114,6 +119,9 @@ class TraceRepository[F[_]: Concurrent](session: Resource[F, Session[F]]) {
       sql"SELECT * FROM trace ORDER BY started_at DESC LIMIT ${int4} OFFSET ${int4}"
         .query(traceCodec)
         .contramap[Pagination](p => p.limit *: p.offset *: EmptyTuple)
+
+    val countTraces: Query[Void, Long] =
+      sql"SELECT COUNT(*) FROM trace".query(int8)
 
     val deleteTrace: Command[UUID] =
       sql"DELETE FROM trace WHERE id = $uuid".command

@@ -22,6 +22,8 @@ case class Trace(
 
 case class TraceWithSpans(trace: Trace, spans: List[Span])
 
+case class TracesPage(items: List[Trace], total: Long)
+
 object Trace {
   given Encoder[Trace] = deriveEncoder[Trace]
   given Decoder[Trace] = deriveDecoder[Trace]
@@ -29,4 +31,8 @@ object Trace {
 
 object TraceWithSpans {
   given Encoder[TraceWithSpans] = deriveEncoder[TraceWithSpans]
+}
+
+object TracesPage {
+  given Encoder[TracesPage] = deriveEncoder[TracesPage]
 }
