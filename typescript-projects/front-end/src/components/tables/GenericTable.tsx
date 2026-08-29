@@ -1,6 +1,6 @@
 import { Table } from '@mantine/core';
 
-interface ColumnDef<T> {
+export interface ColumnDef<T> {
   header: string;
   accessor: (row: T) => React.ReactNode;
 }
@@ -14,7 +14,7 @@ interface TableProps<T> {
 export function GenericTable<T>({ columns, rows, getRowKey }: TableProps<T>) {
 
   return (
-    <Table>
+    <Table className={ classNameProp ?? '' }>
       <Table.Thead>
         <Table.Tr>
           {columns.map((col) => (
