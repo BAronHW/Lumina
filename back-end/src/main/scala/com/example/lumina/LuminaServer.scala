@@ -3,6 +3,7 @@ import Routes.{AgentRoutes, DeploymentRoutes, IngestRoutes, PromptRoutes, Sessio
 import Routes.Helper.ControllerErrorHandler
 import cats.syntax.semigroupk.*
 import cats.effect.{Async, Resource}
+import cats.effect.implicits.*
 import cats.effect.syntax.all.*
 import cats.effect.std.{Console, Queue}
 import com.comcast.ip4s.*
