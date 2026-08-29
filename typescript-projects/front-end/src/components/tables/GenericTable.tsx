@@ -14,7 +14,7 @@ interface TableProps<T> {
 export function GenericTable<T>({ columns, rows, getRowKey }: TableProps<T>) {
 
   return (
-    <Table className={ classNameProp ?? '' }>
+    <Table>
       <Table.Thead>
         <Table.Tr>
           {columns.map((col) => (
