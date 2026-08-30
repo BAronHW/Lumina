@@ -11,7 +11,13 @@ case class Prompt(
     prompt: String
 )
 
+case class PromptsPage(items: List[Prompt], total: Long)
+
 object Prompt {
   given Encoder[Prompt] = deriveEncoder[Prompt]
   given Decoder[Prompt] = deriveDecoder[Prompt]
+}
+
+object PromptsPage {
+  given Encoder[PromptsPage] = deriveEncoder[PromptsPage]
 }

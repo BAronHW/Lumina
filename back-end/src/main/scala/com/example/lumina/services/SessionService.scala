@@ -1,8 +1,8 @@
 package com.example.lumina.services
 
-import cats.Monad
+import cats.{Monad, Parallel}
 import cats.syntax.all.*
-import com.example.lumina.Domain.Session
+import com.example.lumina.Domain.{Pagination, Session, SessionsPage}
 import com.example.lumina.repository.SessionRepository
 import org.typelevel.log4cats.Logger
 import skunk.data.Completion
@@ -12,6 +12,7 @@ import java.util.UUID
 
 trait SessionService[F[_]] {
   def createSession(agentId: UUID, name: String): F[Session]
+  def getSessionsPage(pagination: Pagination): F[SessionsPage]
   def getSessionById(sessionId: UUID): F[Option[Session]]
   def getSessionsByAgentId(agentId: UUID): F[List[Session]]
   def endSession(sessionId: UUID): F[Completion]
@@ -19,11 +20,15 @@ trait SessionService[F[_]] {
 }
 
 object SessionService {
-  def impl[F[_]: Monad](sessionRepository: SessionRepository[F], logger: Logger[F]): SessionService[F] =
+  def impl[F[_]: Monad: Parallel](sessionRepository: SessionRepository[F], logger: Logger[F]): SessionService[F] =
     new SessionService[F] {
       override def createSession(agentId: UUID, name: String): F[Session] =
         val s = Session(UUID.randomUUID(), agentId, name, OffsetDateTime.now(), None)
         logger.info(s"Creating session '$name' for agent $agentId") *> sessionRepository.createSession(s)
+
+      override def getSessionsPage(pagination: Pagination): F[SessionsPage] =
+        (sessionRepository.getAllSessions(pagination), sessionRepository.countSessions())
+          .parMapN((sessions, total) => SessionsPage(sessions, total))
 
       override def getSessionById(sessionId: UUID): F[Option[Session]] =
         logger.info(s"Getting session by id $sessionId") *> sessionRepository.getSessionById(sessionId)

@@ -2,7 +2,7 @@ package com.example.lumina.repository
 
 import cats.effect.{Concurrent, Resource}
 import cats.syntax.all.*
-import com.example.lumina.Domain.Session as DomainSession
+import com.example.lumina.Domain.{Pagination, Session as DomainSession}
 import skunk.*
 import skunk.implicits.*
 import skunk.codec.all.*
@@ -15,6 +15,16 @@ class SessionRepository[F[_]: Concurrent](session: Resource[F, Session[F]]) {
   def createSession(s: DomainSession): F[DomainSession] =
     session.use { sess =>
       sess.prepare(SessionRepositoryQueries.insertSession).flatMap(ps => ps.unique(s))
+    }
+
+  def getAllSessions(pagination: Pagination): F[List[DomainSession]] =
+    session.use { sess =>
+      sess.prepare(SessionRepositoryQueries.selectAllSessions).flatMap(ps => ps.stream(pagination, 64).compile.toList)
+    }
+
+  def countSessions(): F[Long] =
+    session.use { sess =>
+      sess.unique(SessionRepositoryQueries.countSessions)
     }
 
   def getSessionById(sessionId: UUID): F[Option[DomainSession]] =
@@ -52,6 +62,14 @@ class SessionRepository[F[_]: Concurrent](session: Resource[F, Session[F]]) {
 
     val selectSessionById: Query[UUID, DomainSession] =
       sql"SELECT id, agent_id, name, created_at, ended_at FROM session WHERE id = $uuid".query(sessionCodec)
+
+    val selectAllSessions: Query[Pagination, DomainSession] =
+      sql"SELECT id, agent_id, name, created_at, ended_at FROM session ORDER BY created_at DESC LIMIT ${int4} OFFSET ${int4}"
+        .query(sessionCodec)
+        .contramap[Pagination](p => p.limit *: p.offset *: EmptyTuple)
+
+    val countSessions: Query[Void, Long] =
+      sql"SELECT COUNT(*) FROM session".query(int8)
 
     val selectSessionsByAgentId: Query[UUID, DomainSession] =
       sql"SELECT id, agent_id, name, created_at, ended_at FROM session WHERE agent_id = $uuid".query(sessionCodec)

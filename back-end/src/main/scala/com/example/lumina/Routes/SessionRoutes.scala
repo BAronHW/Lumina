@@ -2,8 +2,9 @@ package com.example.lumina.Routes
 
 import cats.effect.Concurrent
 import cats.syntax.all.*
-import com.example.lumina.Domain.Session
+import com.example.lumina.Domain.{Pagination, Session}
 import com.example.lumina.Domain.Session.given
+import com.example.lumina.Domain.SessionsPage.given
 import com.example.lumina.services.SessionService
 import io.circe.generic.auto.*
 import org.http4s.HttpRoutes
@@ -21,8 +22,13 @@ object SessionRoutes:
   def sessionRoutes[F[_]: Concurrent](service: SessionService[F]): HttpRoutes[F] =
     val dsl = new Http4sDsl[F] {}
     import dsl.*
+    object PageMatcher extends OptionalQueryParamDecoderMatcher[Int]("page")
+    object PageSizeMatcher extends OptionalQueryParamDecoderMatcher[Int]("pageSize")
 
     HttpRoutes.of[F] {
+      case GET -> Root / "sessions" :? PageMatcher(page) +& PageSizeMatcher(pageSize) =>
+        service.getSessionsPage(Pagination(page.getOrElse(1), pageSize.getOrElse(20))).flatMap(page => Ok(page))
+
       case GET -> Root / "sessions" / UUIDVar(id) =>
         service.getSessionById(id).flatMap {
           case Some(session) => Ok(session)

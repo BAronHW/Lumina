@@ -1,9 +1,10 @@
 package com.example.lumina.Routes
 
 import com.example.lumina.Domain.Prompt.given
+import com.example.lumina.Domain.PromptsPage.given
 import cats.effect.Concurrent
 import cats.syntax.all.*
-import com.example.lumina.Domain.Prompt
+import com.example.lumina.Domain.{Pagination, Prompt}
 import com.example.lumina.services.PromptService
 import io.circe.generic.auto.*
 import org.http4s.HttpRoutes
@@ -20,8 +21,13 @@ object PromptRoutes {
   def promptRoutes[F[_]: Concurrent](promptService: PromptService[F]): HttpRoutes[F] = {
     val dsl = new Http4sDsl[F] {}
     import dsl.*
+    object PageMatcher extends OptionalQueryParamDecoderMatcher[Int]("page")
+    object PageSizeMatcher extends OptionalQueryParamDecoderMatcher[Int]("pageSize")
 
     HttpRoutes.of[F] {
+      case GET -> Root / "prompts" :? PageMatcher(page) +& PageSizeMatcher(pageSize) =>
+        promptService.getPromptsPage(Pagination(page.getOrElse(1), pageSize.getOrElse(20))).flatMap(page => Ok(page))
+
       case GET -> Root / "prompts" / UUIDVar(id) =>
         promptService.getPrompt(id).flatMap {
           case Some(prompt) => Ok(prompt)

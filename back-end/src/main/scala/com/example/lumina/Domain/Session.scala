@@ -15,7 +15,13 @@ case class Session(
     endedAt: Option[OffsetDateTime]
 )
 
+case class SessionsPage(items: List[Session], total: Long)
+
 object Session {
   given Encoder[Session] = deriveEncoder[Session]
   given Decoder[Session] = deriveDecoder[Session]
+}
+
+object SessionsPage {
+  given Encoder[SessionsPage] = deriveEncoder[SessionsPage]
 }
