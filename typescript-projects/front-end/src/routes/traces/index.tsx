@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { Center, Container, Loader, Pagination, Stack, Text } from '@mantine/core'
 import { useTraces } from '../../api/traces'
 import { GenericTable, type ColumnDef } from '../../components/tables/GenericTable'
@@ -24,6 +24,7 @@ const columns: ColumnDef<Trace>[] = [
 function TracesPage() {
   const [page, setPage] = useState(1);
   const { isPending, error, data } = useTraces(page, 25)
+  const navigate = useNavigate();
 
   return (
     <Container size="xl">
@@ -37,6 +38,7 @@ function TracesPage() {
               columns={columns}
               rows={data?.items ?? []}
               getRowKey={(row) => row.id}
+              onRowClick={(row) => navigate({ to: '/traces/$traceId', params: { traceId: row.id } })}
             />
             <Pagination total={Math.ceil((data?.total ?? 0) / 25)} value={page} onChange={setPage} />
           </Stack>

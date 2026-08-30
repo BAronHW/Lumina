@@ -15,6 +15,7 @@ import { Route as EvalsIndexRouteImport } from './routes/evals/index'
 import { Route as PromptsIndexRouteImport } from './routes/prompts/index'
 import { Route as SessionsIndexRouteImport } from './routes/sessions/index'
 import { Route as TracesIndexRouteImport } from './routes/traces/index'
+import { Route as TracesTraceIdRouteImport } from './routes/traces/$traceId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -46,9 +47,15 @@ const TracesIndexRoute = TracesIndexRouteImport.update({
   path: '/traces/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TracesTraceIdRoute = TracesTraceIdRouteImport.update({
+  id: '/traces/$traceId',
+  path: '/traces/$traceId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/traces/$traceId': typeof TracesTraceIdRoute
   '/costs/': typeof CostsIndexRoute
   '/evals/': typeof EvalsIndexRoute
   '/prompts/': typeof PromptsIndexRoute
@@ -57,6 +64,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/traces/$traceId': typeof TracesTraceIdRoute
   '/costs': typeof CostsIndexRoute
   '/evals': typeof EvalsIndexRoute
   '/prompts': typeof PromptsIndexRoute
@@ -66,6 +74,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/traces/$traceId': typeof TracesTraceIdRoute
   '/costs/': typeof CostsIndexRoute
   '/evals/': typeof EvalsIndexRoute
   '/prompts/': typeof PromptsIndexRoute
@@ -75,12 +84,26 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/costs/' | '/evals/' | '/prompts/' | '/sessions/' | '/traces/'
+    | '/'
+    | '/traces/$traceId'
+    | '/costs/'
+    | '/evals/'
+    | '/prompts/'
+    | '/sessions/'
+    | '/traces/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/costs' | '/evals' | '/prompts' | '/sessions' | '/traces'
+  to:
+    | '/'
+    | '/traces/$traceId'
+    | '/costs'
+    | '/evals'
+    | '/prompts'
+    | '/sessions'
+    | '/traces'
   id:
     | '__root__'
     | '/'
+    | '/traces/$traceId'
     | '/costs/'
     | '/evals/'
     | '/prompts/'
@@ -90,6 +113,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  TracesTraceIdRoute: typeof TracesTraceIdRoute
   CostsIndexRoute: typeof CostsIndexRoute
   EvalsIndexRoute: typeof EvalsIndexRoute
   PromptsIndexRoute: typeof PromptsIndexRoute
@@ -141,11 +165,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TracesIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/traces/$traceId': {
+      id: '/traces/$traceId'
+      path: '/traces/$traceId'
+      fullPath: '/traces/$traceId'
+      preLoaderRoute: typeof TracesTraceIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  TracesTraceIdRoute: TracesTraceIdRoute,
   CostsIndexRoute: CostsIndexRoute,
   EvalsIndexRoute: EvalsIndexRoute,
   PromptsIndexRoute: PromptsIndexRoute,

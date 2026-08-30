@@ -9,12 +9,13 @@ interface TableProps<T> {
   columns: ColumnDef<T>[];
   rows: T[];
   getRowKey: (row: T) => string;
+  onRowClick: (row: T) => void
 }
 
-export function GenericTable<T>({ columns, rows, getRowKey }: TableProps<T>) {
+export function GenericTable<T>({ columns, rows, getRowKey, onRowClick }: TableProps<T>) {
 
   return (
-    <Table>
+    <Table highlightOnHover>
       <Table.Thead>
         <Table.Tr>
           {columns.map((col) => (
@@ -24,7 +25,11 @@ export function GenericTable<T>({ columns, rows, getRowKey }: TableProps<T>) {
       </Table.Thead>
       <Table.Tbody>
         {rows.map((row) => (
-          <Table.Tr key={getRowKey(row)}>
+          <Table.Tr
+            key={getRowKey(row)}
+            onClick={() => onRowClick(row)}
+            style={{ cursor: 'pointer' }}
+          >
             {columns.map((col) => (
               <Table.Td key={col.header}>{col.accessor(row)}</Table.Td>
               ))}
