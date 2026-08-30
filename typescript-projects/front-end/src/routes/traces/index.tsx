@@ -4,6 +4,7 @@ import { useTraces } from '../../api/traces'
 import { GenericTable, type ColumnDef } from '../../components/tables/GenericTable'
 import type { Trace } from '@lumina/sdk'
 import { useState } from 'react'
+import GenericBadge from '../../components/badge/GenericBadge'
 
 export const Route = createFileRoute('/traces/')({
   component: TracesPage,
@@ -14,7 +15,7 @@ const columns: ColumnDef<Trace>[] = [
   { header: 'Name', accessor: (row) => row.name },
   { header: 'Agent', accessor: (row) => row.agentId },
   { header: 'Session', accessor: (row) => row.sessionId ?? '—' },
-  { header: 'Status', accessor: (row) => row.status },
+  { header: 'Status', accessor: (row) => <GenericBadge colour={row.status === 'ok' ? 'green' : row.status === 'error' ? 'red' : 'orange'} label={ row.status }/> },
   { header: 'Cost', accessor: (row) => row.totalCostUsd != null ? `$${row.totalCostUsd.toFixed(4)}` : '—' },
   { header: 'Started', accessor: (row) => new Date(row.startedAt).toLocaleString() },
   { header: 'Ended', accessor: (row) => row.endedAt ? new Date(row.endedAt).toLocaleString() : '—' },
