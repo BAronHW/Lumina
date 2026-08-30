@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { Container, Loader, Pagination, Stack, Text } from '@mantine/core'
+import { Center, Container, Loader, Pagination, Stack, Text } from '@mantine/core'
 import { useTraces } from '../../api/traces'
 import { GenericTable, type ColumnDef } from '../../components/tables/GenericTable'
 import type { Trace } from '@lumina/sdk'
@@ -24,20 +24,22 @@ function TracesPage() {
   const [page, setPage] = useState(1);
   const { isPending, error, data } = useTraces(page, 25)
 
-  if (isPending) return <Loader />
-  if (error) return <Text c="red">Failed to load traces: {error.message}</Text>
-
   return (
     <Container size="xl">
-      <h1>Traces</h1>
-      <Stack align="center" gap="md">
-        <GenericTable<Trace>
-          columns={columns}
-          rows={data?.items ?? []}
-          getRowKey={(row) => row.id}
-        />
-        <Pagination total={Math.ceil((data?.total ?? 0) / 25)} value={page} onChange={setPage} />
-      </Stack>
+      { isPending
+        ? <Center h="50vh"><Loader/></Center>
+        : error
+        ? <Center h="50vh"><Text c="red">Failed to load traces: {error.message}</Text></Center>
+        : <><h1>Traces</h1>
+          <Stack align="center" gap="md">
+            <GenericTable<Trace>
+              columns={columns}
+              rows={data?.items ?? []}
+              getRowKey={(row) => row.id}
+            />
+            <Pagination total={Math.ceil((data?.total ?? 0) / 25)} value={page} onChange={setPage} />
+          </Stack>
+        </> }
     </Container>
   )
 }
