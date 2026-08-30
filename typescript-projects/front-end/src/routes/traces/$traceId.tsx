@@ -1,5 +1,5 @@
-import { createFileRoute } from '@tanstack/react-router'
-import { Center, Container, Loader, Text, Title, Group, Stack } from '@mantine/core'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { Anchor, Center, Container, Loader, Text, Title, Group, Stack } from '@mantine/core'
 import { useTrace } from '../../api/traces'
 import StatusBadge from '../../components/badge/GenericBadge'
 
@@ -10,6 +10,7 @@ export const Route = createFileRoute('/traces/$traceId')({
 function TraceDetailPage() {
   const { traceId } = Route.useParams()
   const { isPending, error, data } = useTrace(traceId)
+  const navigate = useNavigate();
 
   if (isPending) return <Center h="50vh"><Loader /></Center>
   if (error) return <Center h="50vh"><Text c="red">Failed to load trace: {error.message}</Text></Center>
@@ -17,10 +18,11 @@ function TraceDetailPage() {
 
   const { trace } = data
 
-  console.log(JSON.stringify(data, null, 2));
-
   return (
     <Container size="xl">
+      <Anchor size="sm" c="dimmed" onClick={() => navigate({ to: '/traces' })} style={{ cursor: 'pointer' }} mb="xs">
+        ← Back to traces
+      </Anchor>
       <Title order={2} mb="md">{trace.name}</Title>
       <Stack gap="sm">
         <Group><Text fw={500}>Status:</Text> <StatusBadge status={trace.status} /></Group>
