@@ -38,6 +38,8 @@ export default function FlameChart<T>(props: FlameChartProps<T>) {
     }, new Map<string | null, T[]>())
 
     const rootNode = data.find((elem) => !getParentKey(elem))
+
+    
     /**
      * 1. x axis is duration and then y axis is the order
      * 2. write a function that would sort the data into order 
