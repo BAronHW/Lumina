@@ -27,14 +27,25 @@ export interface TracesPage {
     total: number;
 }
 
-export function useTraces(page?: number, pageSize?: number) {
+export interface TraceFilters {
+    page?: number;
+    pageSize?: number;
+    status?: string;
+    from?: string;
+    to?: string;
+}
+
+export function useTraces(filters: TraceFilters = {}) {
     const params = new URLSearchParams();
-    if (page !== undefined) params.set('page', page.toString());
-    if (pageSize !== undefined) params.set('pageSize', pageSize.toString());
+    if (filters.page !== undefined) params.set('page', filters.page.toString());
+    if (filters.pageSize !== undefined) params.set('pageSize', filters.pageSize.toString());
+    if (filters.status) params.set('status', filters.status);
+    if (filters.from) params.set('from', filters.from);
+    if (filters.to) params.set('to', filters.to);
     const query = params.toString();
 
     return useQuery<TracesPage>({
-        queryKey: ['traces', { page, pageSize }],
+        queryKey: ['traces', filters],
         queryFn: () => fetch(`/api/traces${query ? `?${query}` : ''}`).then((res) => res.json())
     })
 }

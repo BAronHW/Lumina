@@ -124,7 +124,7 @@ class TraceRepository[F[_]: Concurrent](session: Resource[F, Session[F]]) {
 
     private def buildWhereClause(traceFilter: TraceFilter): AppliedFragment = {
       val conditions = List(
-        traceFilter.status.map(s => sql"status = $varchar".apply(s)),
+        traceFilter.status.map(s => sql"status = $varchar::span_status".apply(s)),
         traceFilter.from.map(from => sql"started_at >= $timestamptz".apply(from)),
         traceFilter.to.map(to => sql"ended_at <= $timestamptz".apply(to))
       ).flatten
