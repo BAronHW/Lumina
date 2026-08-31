@@ -29,16 +29,41 @@ export default function FlameChart<T>(props: FlameChartProps<T>) {
         rowHeight 
     } = props;
 
-    const childrenMap = data.reduce((map, item) => {
+    const displayList = useMemo(() => builDisplayList(data), [data])
+
+    /**
+     * Takes the array of data and builds out a data structure that the component can use to correctly 
+     * render the flame chart component.
+     * 
+     * the data structure looks as such:
+     * [
+     *      {
+     *          spanId: key, parentSpanId: key, name: string
+     *      },
+     *      {
+     *          spanId: key, parentSpanId: key, name: string
+     *      }
+     * ]
+     * @param data 
+     */
+    const builDisplayList = (data: T[]) => {
+        const childMap = childrenMap(data);
+        const rootNode = data.find((elem) => !getParentKey(elem));
+
+        if (!rootNode) return [];
+
+        const result: { item: T; depth: number }[] = [];
+
+        
+    }
+
+    const childrenMap = (data: T[]) => data.reduce((map, item) => {
         const parentKey = getParentKey(item);
         const siblings = map.get(parentKey) ?? [];
         siblings.push(item);
         map.set(parentKey, siblings);
         return map;
     }, new Map<string | null, T[]>())
-
-    const rootNode = data.find((elem) => !getParentKey(elem))
-
     
     /**
      * 1. x axis is duration and then y axis is the order
