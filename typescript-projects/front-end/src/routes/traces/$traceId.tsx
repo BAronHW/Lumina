@@ -17,6 +17,7 @@ function TraceDetailPage() {
   if (!data) return <Center h="50vh"><Text c="dimmed">Trace not found</Text></Center>
 
   const { trace } = data
+  console.log(JSON.stringify(data, null, 2))
 
   return (
     <Container size="xl">
@@ -32,6 +33,7 @@ function TraceDetailPage() {
         <Group><Text fw={500}>Started:</Text> <Text>{new Date(trace.startedAt).toLocaleString()}</Text></Group>
         <Group><Text fw={500}>Ended:</Text> <Text>{trace.endedAt ? new Date(trace.endedAt).toLocaleString() : '—'}</Text></Group>
         <Group><Text fw={500}>Spans:</Text> <Text>{data.spans.length}</Text></Group>
+        <Group><Text fw={500}>Data:</Text> <Text>{JSON.stringify(data, null, 2)}</Text></Group>
       </Stack>
     </Container>
   )
