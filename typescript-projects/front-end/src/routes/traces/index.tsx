@@ -1,6 +1,5 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { Center, Container, Group, Loader, Pagination, Select, Stack, Text } from '@mantine/core'
-import { DatePickerInput } from '@mantine/dates'
+import { Center, Container, Group, Loader, Pagination, Select, Stack, Text, TextInput } from '@mantine/core'
 import { useTraces } from '../../api/traces'
 import { GenericTable, type ColumnDef } from '../../components/tables/GenericTable'
 import type { Trace } from '@lumina/sdk'
@@ -27,16 +26,16 @@ const PAGE_SIZE = 25;
 function TracesPage() {
   const [page, setPage] = useState(1);
   const [status, setStatus] = useState<string | null>(null);
-  const [from, setFrom] = useState<Date | null>(null);
-  const [to, setTo] = useState<Date | null>(null);
+  const [from, setFrom] = useState('');
+  const [to, setTo] = useState('');
   const navigate = useNavigate();
 
   const { isPending, error, data } = useTraces({
     page,
     pageSize: PAGE_SIZE,
     status: status ?? undefined,
-    from: from?.toISOString(),
-    to: to ? new Date(to.getFullYear(), to.getMonth(), to.getDate(), 23, 59, 59).toISOString() : undefined,
+    from: from ? new Date(from).toISOString() : undefined,
+    to: to ? new Date(to + 'T23:59:59').toISOString() : undefined,
   })
 
   const handleFilterChange = () => setPage(1);
@@ -60,18 +59,18 @@ function TracesPage() {
               clearable
               w={120}
             />
-            <DatePickerInput
+            <TextInput
+              type="date"
               placeholder="From"
               value={from}
-              onChange={(v) => { setFrom(v); handleFilterChange(); }}
-              clearable
+              onChange={(e) => { setFrom(e.currentTarget.value); handleFilterChange(); }}
               w={160}
             />
-            <DatePickerInput
+            <TextInput
+              type="date"
               placeholder="To"
               value={to}
-              onChange={(v) => { setTo(v); handleFilterChange(); }}
-              clearable
+              onChange={(e) => { setTo(e.currentTarget.value); handleFilterChange(); }}
               w={160}
             />
           </Group>

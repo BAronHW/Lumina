@@ -10,8 +10,6 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as CostsIndexRouteImport } from './routes/costs/index'
-import { Route as EvalsIndexRouteImport } from './routes/evals/index'
 import { Route as PromptsIndexRouteImport } from './routes/prompts/index'
 import { Route as SessionsIndexRouteImport } from './routes/sessions/index'
 import { Route as TracesIndexRouteImport } from './routes/traces/index'
@@ -20,16 +18,6 @@ import { Route as TracesTraceIdRouteImport } from './routes/traces/$traceId'
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CostsIndexRoute = CostsIndexRouteImport.update({
-  id: '/costs/',
-  path: '/costs/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const EvalsIndexRoute = EvalsIndexRouteImport.update({
-  id: '/evals/',
-  path: '/evals/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PromptsIndexRoute = PromptsIndexRouteImport.update({
@@ -56,8 +44,6 @@ const TracesTraceIdRoute = TracesTraceIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/traces/$traceId': typeof TracesTraceIdRoute
-  '/costs/': typeof CostsIndexRoute
-  '/evals/': typeof EvalsIndexRoute
   '/prompts/': typeof PromptsIndexRoute
   '/sessions/': typeof SessionsIndexRoute
   '/traces/': typeof TracesIndexRoute
@@ -65,8 +51,6 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/traces/$traceId': typeof TracesTraceIdRoute
-  '/costs': typeof CostsIndexRoute
-  '/evals': typeof EvalsIndexRoute
   '/prompts': typeof PromptsIndexRoute
   '/sessions': typeof SessionsIndexRoute
   '/traces': typeof TracesIndexRoute
@@ -75,37 +59,19 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/traces/$traceId': typeof TracesTraceIdRoute
-  '/costs/': typeof CostsIndexRoute
-  '/evals/': typeof EvalsIndexRoute
   '/prompts/': typeof PromptsIndexRoute
   '/sessions/': typeof SessionsIndexRoute
   '/traces/': typeof TracesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths:
-    | '/'
-    | '/traces/$traceId'
-    | '/costs/'
-    | '/evals/'
-    | '/prompts/'
-    | '/sessions/'
-    | '/traces/'
+  fullPaths: '/' | '/traces/$traceId' | '/prompts/' | '/sessions/' | '/traces/'
   fileRoutesByTo: FileRoutesByTo
-  to:
-    | '/'
-    | '/traces/$traceId'
-    | '/costs'
-    | '/evals'
-    | '/prompts'
-    | '/sessions'
-    | '/traces'
+  to: '/' | '/traces/$traceId' | '/prompts' | '/sessions' | '/traces'
   id:
     | '__root__'
     | '/'
     | '/traces/$traceId'
-    | '/costs/'
-    | '/evals/'
     | '/prompts/'
     | '/sessions/'
     | '/traces/'
@@ -114,8 +80,6 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   TracesTraceIdRoute: typeof TracesTraceIdRoute
-  CostsIndexRoute: typeof CostsIndexRoute
-  EvalsIndexRoute: typeof EvalsIndexRoute
   PromptsIndexRoute: typeof PromptsIndexRoute
   SessionsIndexRoute: typeof SessionsIndexRoute
   TracesIndexRoute: typeof TracesIndexRoute
@@ -128,20 +92,6 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/costs/': {
-      id: '/costs/'
-      path: '/costs'
-      fullPath: '/costs/'
-      preLoaderRoute: typeof CostsIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/evals/': {
-      id: '/evals/'
-      path: '/evals'
-      fullPath: '/evals/'
-      preLoaderRoute: typeof EvalsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/prompts/': {
@@ -178,8 +128,6 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   TracesTraceIdRoute: TracesTraceIdRoute,
-  CostsIndexRoute: CostsIndexRoute,
-  EvalsIndexRoute: EvalsIndexRoute,
   PromptsIndexRoute: PromptsIndexRoute,
   SessionsIndexRoute: SessionsIndexRoute,
   TracesIndexRoute: TracesIndexRoute,

@@ -35,8 +35,6 @@ export default function HomePage() {
             <Navbar links={[
               { href: '/traces', title: 'Traces' },
               { href: '/sessions', title: 'Session' },
-              { href: '/costs', title: 'Costs' },
-              { href: '/evals', title: 'Evals' },
               { href: '/prompts', title: 'Prompts' }
             ]}/>
           </Stack>
