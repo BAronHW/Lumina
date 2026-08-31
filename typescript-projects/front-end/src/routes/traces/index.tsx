@@ -36,7 +36,7 @@ function TracesPage() {
     pageSize: PAGE_SIZE,
     status: status ?? undefined,
     from: from?.toISOString(),
-    to: to?.toISOString(),
+    to: to ? new Date(to.getFullYear(), to.getMonth(), to.getDate(), 23, 59, 59).toISOString() : undefined,
   })
 
   const handleFilterChange = () => setPage(1);
