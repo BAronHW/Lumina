@@ -5,12 +5,12 @@ import com.example.lumina.Domain.TracesPage.given
 import com.example.lumina.Domain.TraceWithSpans.given
 import cats.effect.Concurrent
 import cats.syntax.all.*
-import com.example.lumina.Domain.{Pagination, Trace, TraceWithSpans}
+import com.example.lumina.Domain.{Pagination, Trace, TraceFilter, TraceWithSpans}
 import com.example.lumina.services.TraceService
 import com.example.lumina.types.SpanStatus
 import com.example.lumina.types.given
 import io.circe.generic.auto.*
-import org.http4s.HttpRoutes
+import org.http4s.{HttpRoutes, ParseFailure, QueryParamDecoder}
 import org.http4s.circe.*
 import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.dsl.Http4sDsl
@@ -18,7 +18,6 @@ import skunk.data.Completion
 
 import java.time.OffsetDateTime
 import java.util.UUID
-
 
 object TraceRoutes {
   private case class CreateTraceRequest(
@@ -47,8 +46,17 @@ object TraceRoutes {
   def traceRoutes[F[_]: Concurrent](traceService: TraceService[F]): HttpRoutes[F] = {
     val dsl = new Http4sDsl[F] {}
     import dsl.*
+
+    given QueryParamDecoder[OffsetDateTime] =
+      QueryParamDecoder[String].emap(s =>
+        scala.util.Try(OffsetDateTime.parse(s)).toEither.left.map(e => ParseFailure("Invalid datetime", e.getMessage))
+      )
+
     object PageMatcher extends OptionalQueryParamDecoderMatcher[Int]("page")
     object PageSizeMatcher extends OptionalQueryParamDecoderMatcher[Int]("pageSize")
+    object StatusMatcher extends OptionalQueryParamDecoderMatcher[String]("status")
+    object FromMatcher extends OptionalQueryParamDecoderMatcher[OffsetDateTime]("from")
+    object ToMatcher extends OptionalQueryParamDecoderMatcher[OffsetDateTime]("to")
 
     HttpRoutes.of[F] {
       case GET -> Root / "traces" / UUIDVar(traceId) =>
@@ -118,14 +126,27 @@ object TraceRoutes {
           resp <- Ok()
         } yield resp
 
-      case GET -> Root / "traces" :? PageMatcher(page) +& PageSizeMatcher(pageSize) =>
-        traceService.getTracesPage(Pagination(page.getOrElse(1), pageSize.getOrElse(20))).flatMap(page => Ok(page))
+      case GET -> Root / "traces"
+          :? PageMatcher(page)
+          +& PageSizeMatcher(pageSize)
+          +& StatusMatcher(status)
+          +& FromMatcher(from)
+          +& ToMatcher(to) =>
+        val filter = TraceFilter(
+          pagination = Pagination(page.getOrElse(1), pageSize.getOrElse(20)),
+          status = status,
+          from = from,
+          to = to
+        )
+        traceService.getTracesPage(filter).flatMap(page => Ok(page))
 
       case GET -> Root / "agents" / UUIDVar(agentId) / "traces" =>
         traceService.getTracesByAgentId(agentId).flatMap(traces => Ok(traces))
 
       case GET -> Root / "traces" / "finished" :? PageMatcher(page) +& PageSizeMatcher(pageSize) =>
-        traceService.getAllFinishedTraces(Pagination(page.getOrElse(1), pageSize.getOrElse(20))).flatMap(traces => Ok(traces))
+        traceService
+          .getAllFinishedTraces(Pagination(page.getOrElse(1), pageSize.getOrElse(20)))
+          .flatMap(traces => Ok(traces))
     }
   }
 

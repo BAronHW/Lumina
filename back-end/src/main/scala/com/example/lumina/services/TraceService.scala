@@ -3,7 +3,7 @@ package com.example.lumina.services
 import cats.Monad
 import cats.Parallel
 import cats.syntax.all.*
-import com.example.lumina.Domain.{Pagination, Trace, TracesPage, TraceWithSpans}
+import com.example.lumina.Domain.{Pagination, Trace, TraceFilter, TraceWithSpans, TracesPage}
 import com.example.lumina.repository.TraceRepository
 import org.typelevel.log4cats.Logger
 import skunk.data.Completion
@@ -18,8 +18,8 @@ trait TraceService[F[_]] {
   def batchCreateTrace(traceBody: List[Trace]): F[Completion]
   def batchUpdateTraces(traces: List[Trace]): F[Completion]
   def updateBatchTracesWithId(traceIds: List[UUID]): F[Completion]
-  def getAllTraces(pagination: Pagination): F[List[Trace]]
-  def getTracesPage(pagination: Pagination): F[TracesPage]
+  def getAllTraces(traceFilter: TraceFilter): F[List[Trace]]
+  def getTracesPage(traceFilter: TraceFilter): F[TracesPage]
   def getTracesByAgentId(agentId: UUID): F[List[Trace]]
   def getAllFinishedTraces(pagination: Pagination): F[List[Trace]]
   def getTraceWithSpans(traceId: UUID): F[Option[TraceWithSpans]]
@@ -65,11 +65,11 @@ object TraceService {
         }
       }
 
-      override def getAllTraces(pagination: Pagination): F[List[Trace]] =
-        logger.info(s"Getting all traces with pagination") *> traceRepository.getAllTraces(pagination)
+      override def getAllTraces(traceFilter: TraceFilter): F[List[Trace]] =
+        logger.info(s"Getting all traces with pagination") *> traceRepository.getAllTraces(traceFilter)
 
-      override def getTracesPage(pagination: Pagination): F[TracesPage] =
-        (traceRepository.getAllTraces(pagination), traceRepository.countTraces())
+      override def getTracesPage(traceFilter: TraceFilter): F[TracesPage] =
+        (traceRepository.getAllTraces(traceFilter), traceRepository.countTraces(traceFilter))
           .parMapN((traces, total) => TracesPage(traces, total))
 
       override def getTracesByAgentId(agentId: UUID): F[List[Trace]] =

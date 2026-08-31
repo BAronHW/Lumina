@@ -4,7 +4,7 @@ import cats.effect.Concurrent
 import cats.effect.kernel.Resource
 import com.example.lumina.types.{SpanKind, SpanStatus}
 import cats.syntax.all.*
-import com.example.lumina.Domain.{Pagination, Span, Trace, TraceWithSpans}
+import com.example.lumina.Domain.{Pagination, Span, Trace, TraceFilter, TraceWithSpans}
 import io.circe.{Decoder as CDecoder, Encoder as CEncoder}
 import skunk.*
 import skunk.circe.codec.all.jsonb
@@ -35,14 +35,16 @@ class TraceRepository[F[_]: Concurrent](session: Resource[F, Session[F]]) {
       s.prepare(TraceRepositoryQueries.deleteTrace).flatMap(ps => ps.execute(traceId))
     }
 
-  def getAllTraces(pagination: Pagination): F[List[Trace]] =
+  def getAllTraces(traceFilter: TraceFilter): F[List[Trace]] =
     session.use { s =>
-      s.prepare(TraceRepositoryQueries.selectAllTraces).flatMap(ps => ps.stream(pagination, 64).compile.toList)
+      val af = TraceRepositoryQueries.dynamicallyCreateTraceFilterQuery(traceFilter)
+      s.execute(af.fragment.query(TraceRepositoryQueries.traceCodec))(af.argument)
     }
 
-  def countTraces(): F[Long] =
+  def countTraces(traceFilter: TraceFilter): F[Long] =
     session.use { s =>
-      s.unique(TraceRepositoryQueries.countTraces)
+      val af = TraceRepositoryQueries.dynamicallyCreateTraceCountQuery(traceFilter)
+      s.unique(af.fragment.query(int8))(af.argument)
     }
 
   def batchCreateTraces(traces: List[Trace]): F[Completion] = {
@@ -104,7 +106,7 @@ class TraceRepository[F[_]: Concurrent](session: Resource[F, Session[F]]) {
     private val tagsCodec: Codec[Map[String, String]] =
       jsonb.imap(_.as[Map[String, String]].getOrElse(Map.empty))(tags => CEncoder[Map[String, String]].apply(tags))
 
-    private val traceCodec: Codec[Trace] =
+    val traceCodec: Codec[Trace] =
       (uuid *: uuid *: uuid.opt *: varchar *: spanStatusCodec *:
         timestamptz *: timestamptz.opt *: numeric.opt *: tagsCodec).to[Trace]
 
@@ -119,6 +121,35 @@ class TraceRepository[F[_]: Concurrent](session: Resource[F, Session[F]]) {
       sql"SELECT * FROM trace ORDER BY started_at DESC LIMIT ${int4} OFFSET ${int4}"
         .query(traceCodec)
         .contramap[Pagination](p => p.limit *: p.offset *: EmptyTuple)
+
+    private def buildWhereClause(traceFilter: TraceFilter): AppliedFragment = {
+      val conditions = List(
+        traceFilter.status.map(s => sql"status = $varchar".apply(s)),
+        traceFilter.from.map(from => sql"started_at >= $timestamptz".apply(from)),
+        traceFilter.to.map(to => sql"ended_at <= $timestamptz".apply(to))
+      ).flatten
+
+      conditions match {
+        case Nil   => AppliedFragment.empty
+        case frags => sql" WHERE ".apply(Void) |+| frags.reduceLeft((a, b) => a |+| sql" AND ".apply(Void) |+| b)
+      }
+    }
+
+    def dynamicallyCreateTraceFilterQuery(traceFilter: TraceFilter): AppliedFragment = {
+      val select = sql"SELECT * FROM trace".apply(Void)
+      val where = buildWhereClause(traceFilter)
+      val order = sql" ORDER BY started_at DESC".apply(Void)
+      val limit = sql" LIMIT $int4 OFFSET $int4".apply(traceFilter.pagination.limit, traceFilter.pagination.offset)
+
+      select |+| where |+| order |+| limit
+    }
+
+    def dynamicallyCreateTraceCountQuery(traceFilter: TraceFilter): AppliedFragment = {
+      val select = sql"SELECT COUNT(*) FROM trace".apply(Void)
+      val where = buildWhereClause(traceFilter)
+
+      select |+| where
+    }
 
     val countTraces: Query[Void, Long] =
       sql"SELECT COUNT(*) FROM trace".query(int8)
@@ -143,7 +174,8 @@ class TraceRepository[F[_]: Concurrent](session: Resource[F, Session[F]]) {
     def batchUpdateTrace(traceList: List[Trace]): Command[traceList.type] = {
       val enc = (uuid *: varchar *: spanStatusCodec *: timestamptz *: timestamptz.opt)
         .contramap[Trace](t => t.id *: t.name *: t.status *: t.startedAt *: t.endedAt *: EmptyTuple)
-        .values.list(traceList)
+        .values
+        .list(traceList)
       sql"""UPDATE trace
               SET name       = v.name,
                   status     = v.status::span_status,
